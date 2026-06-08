@@ -7,6 +7,10 @@ const OFFSET_2_A = 1_117_113;
 const OFFSET_2_B = 1_358_437;
 const XOR_CODE_2 = 86_216_345;
 
+function mod36(value: number): number {
+  return ((value % 36) + 36) % 36;
+}
+
 function shiftUuid(uuid: string, transform: (value: number, index: number) => number): string {
   const result: string[] = [];
 
@@ -25,7 +29,7 @@ function shiftUuid(uuid: string, transform: (value: number, index: number) => nu
       continue;
     }
 
-    const shifted = transform(value, index) % 36;
+    const shifted = mod36(transform(value, index));
     result.push(shifted < 10 ? String.fromCharCode(shifted + DIGIT) : String.fromCharCode(shifted + ALPHA - 10));
   }
 

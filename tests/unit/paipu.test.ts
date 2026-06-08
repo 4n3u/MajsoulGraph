@@ -22,6 +22,11 @@ describe("paipu uuid conversion", () => {
     expect(encodePaipuUuid("0-a")).toBe("h-t");
     expect(decodePaipuUuid("h-t")).toBe("0-a");
   });
+
+  it("matches Python modulo behavior for long tokens", () => {
+    const ordinary = "abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789";
+    expect(decodePaipuUuid(encodePaipuUuid(ordinary))).toBe(ordinary);
+  });
 });
 
 describe("account and match id conversion", () => {
