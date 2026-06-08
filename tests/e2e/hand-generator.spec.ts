@@ -1,4 +1,11 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function expectErrorToast(page: Page, message: string) {
+  const toast = page.locator(".base-toast");
+
+  await expect(toast).toContainText("오류");
+  await expect(toast).toContainText(message);
+}
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
@@ -114,6 +121,6 @@ test("shows a Korean error for hands over the tile limit", async ({ page }) => {
   await page.getByLabel("패 입력").fill("m1111111111111111111");
   await page.getByRole("button", { name: "이미지 생성" }).click();
 
-  await expect(page.getByRole("alert")).toContainText("18개");
+  await expectErrorToast(page, "18개");
   await expect(page.getByLabel("생성된 손패 이미지")).toBeHidden();
 });

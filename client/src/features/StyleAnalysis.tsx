@@ -3,6 +3,7 @@ import type { ProcessedStyleStats, StyleIntensity, StyleLabel } from "@shared/st
 import { EChart } from "../charts/EChart";
 import { buildStyleChartOptions } from "../charts/styleChartOptions";
 import { Button, ProgressBar, SelectField, TextField } from "../components/BaseControls";
+import { useErrorToast } from "../components/ErrorToasts";
 
 type SameNameIndex = "0" | "1" | "2";
 
@@ -82,10 +83,10 @@ export function StyleAnalysis() {
   const [count, setCount] = useState("");
   const [sameName, setSameName] = useState<SameNameIndex>("0");
   const [status, setStatus] = useState("");
-  const [error, setError] = useState("");
   const [result, setResult] = useState<StyleResponse | null>(null);
   const requestIdRef = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const showError = useErrorToast();
   const isLoading = Boolean(status);
 
   useEffect(() => {
@@ -110,19 +111,18 @@ export function StyleAnalysis() {
 
     const trimmedNickname = nickname.trim();
     const trimmedCount = count.trim();
-    setError("");
     setResult(null);
 
     if (!trimmedNickname) {
       setStatus("");
-      setError("닉네임을 입력해주세요.");
+      showError("닉네임을 입력해주세요.");
       return;
     }
 
     const parsedCount = Number(trimmedCount);
     if (trimmedCount && (!/^\d+$/.test(trimmedCount) || !Number.isSafeInteger(parsedCount) || parsedCount <= 0)) {
       setStatus("");
-      setError("대국 수는 양의 정수로 입력해주세요.");
+      showError("대국 수는 양의 정수로 입력해주세요.");
       return;
     }
 
@@ -158,7 +158,7 @@ export function StyleAnalysis() {
       if (isCurrentRequest()) {
         setResult(null);
         setStatus("");
-        setError(submitError instanceof Error ? submitError.message : "스타일 분석에 실패했습니다.");
+        showError(submitError instanceof Error ? submitError.message : "스타일 분석에 실패했습니다.");
         if (abortControllerRef.current === abortController) {
           abortControllerRef.current = null;
         }
@@ -214,12 +214,6 @@ export function StyleAnalysis() {
 
       {status ? (
         <ProgressBar label="스타일 분석 진행 중" />
-      ) : null}
-
-      {error ? (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
       ) : null}
 
       {result && chartOptions ? (

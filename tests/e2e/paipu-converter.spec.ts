@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 const ordinaryUrl =
   "https://game.mahjongsoul.com/?paipu=240101-12345678-abcdef12_a280178470";
@@ -8,6 +8,13 @@ const standardUuidOrdinaryUrl =
   "https://game.mahjongsoul.com/?paipu=260608-1229bf0c-abac-4517-b2f6-f6c07714d154_a418784756";
 const standardUuidAnonymousUrl =
   "https://game.mahjongsoul.com/?paipu=jojqlu-prs038u7-799c-685c-iaog-rjqfnojnxmrr_a418784756_2";
+
+async function expectErrorToast(page: Page, message: string) {
+  const toast = page.locator(".base-toast");
+
+  await expect(toast).toContainText("오류");
+  await expect(toast).toContainText(message);
+}
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
@@ -54,7 +61,7 @@ test("shows a Korean error for invalid input", async ({ page }) => {
   await page.getByLabel("패보 주소 입력").fill("not a paipu url");
   await page.getByRole("button", { name: "변환" }).click();
 
-  await expect(page.getByRole("alert")).toContainText("패보 주소");
+  await expectErrorToast(page, "패보 주소");
   await expect(page.getByRole("heading", { name: /변환된/ })).toBeHidden();
 });
 
@@ -64,6 +71,6 @@ test("shows a Korean error for malformed paipu token and match id", async ({ pag
     .fill("https://game.mahjongsoul.com/?paipu=foo_a0");
   await page.getByRole("button", { name: "변환" }).click();
 
-  await expect(page.getByRole("alert")).toContainText("패보 주소");
+  await expectErrorToast(page, "패보 주소");
   await expect(page.getByRole("heading", { name: /변환된/ })).toBeHidden();
 });

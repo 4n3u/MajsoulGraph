@@ -1,5 +1,10 @@
 import { AppShell } from "./components/AppShell";
+import { ErrorToastProvider } from "./components/ErrorToasts";
 
 export function App() {
-  return <AppShell />;
+  return (
+    <ErrorToastProvider>
+      <AppShell />
+    </ErrorToastProvider>
+  );
 }

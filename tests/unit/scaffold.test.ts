@@ -107,5 +107,9 @@ describe("scaffold", () => {
     expect(css).toMatch(/\.tool-tab-indicator\s*{[\s\S]*border-top: 1px solid oklch\(14\.5% 0 0deg\)/);
     expect(css).toMatch(/\.tool-nav::\-webkit-scrollbar\s*{[\s\S]*display: none/);
     expect(css).toMatch(/\.base-progress-track\s*{[\s\S]*background-color: oklch\(92\.2% 0 0deg\)/);
+    expect(css).toMatch(/\.base-toast-viewport\s*{[\s\S]*width: calc\(100vw - 2rem\)/);
+    expect(css).toMatch(/\.base-toast-viewport\s*{[\s\S]*width: 22\.5rem/);
+    expect(css).toMatch(/\.base-toast\s*{[\s\S]*box-shadow: 0\.25rem 0\.25rem 0 rgb\(0 0 0 \/ 12%\)/);
+    expect(css).toMatch(/\.base-toast-close\s*{[\s\S]*border-radius: 0/);
   });
 });

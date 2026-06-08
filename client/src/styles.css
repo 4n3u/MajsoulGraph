@@ -489,17 +489,6 @@ h1 {
   cursor: not-allowed;
 }
 
-.form-error {
-  background: var(--danger-bg);
-  border: 1px solid var(--danger-border);
-  border-radius: 8px;
-  color: var(--danger-text);
-  font-weight: 700;
-  line-height: 1.5;
-  margin: 16px 0 0;
-  padding: 12px 14px;
-}
-
 .base-progress {
   display: grid;
   grid-template-columns: 1fr;
@@ -554,6 +543,118 @@ h1 {
   .base-progress-indicator[data-indeterminate] {
     animation-duration: 2400ms;
   }
+}
+
+.base-toast-viewport {
+  bottom: 1rem;
+  left: auto;
+  margin: 0 auto;
+  position: fixed;
+  right: 1rem;
+  top: auto;
+  width: calc(100vw - 2rem);
+  z-index: 100;
+}
+
+@media (min-width: 500px) {
+  .base-toast-viewport {
+    bottom: 2rem;
+    right: 2rem;
+    width: 22.5rem;
+  }
+}
+
+.base-toast {
+  background-color: white;
+  border: 1px solid oklch(14.5% 0 0deg);
+  box-shadow: 0.25rem 0.25rem 0 rgb(0 0 0 / 12%);
+  box-sizing: border-box;
+  color: oklch(14.5% 0 0deg);
+  cursor: default;
+  margin-top: 0.75rem;
+  user-select: none;
+  width: 100%;
+}
+
+.base-toast[data-starting-style],
+.base-toast[data-ending-style] {
+  opacity: 0;
+  transform: translateY(150%);
+}
+
+.base-toast-content {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  gap: 1rem;
+  overflow: hidden;
+  padding: 0.75rem;
+  transition: opacity 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.base-toast-content[data-behind] {
+  opacity: 0;
+}
+
+.base-toast-content[data-expanded] {
+  opacity: 1;
+}
+
+.base-toast-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.base-toast-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  margin: 0;
+}
+
+.base-toast-description {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.base-toast-close {
+  align-items: center;
+  background-color: white;
+  border: 1px solid oklch(14.5% 0 0deg);
+  border-radius: 0;
+  box-sizing: border-box;
+  color: oklch(14.5% 0 0deg);
+  display: flex;
+  flex-shrink: 0;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 400;
+  gap: 0.5rem;
+  height: 2rem;
+  justify-content: center;
+  line-height: 1;
+  padding: 0 0.75rem;
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .base-toast-close:hover:not([data-disabled]) {
+    background-color: oklch(97% 0 0deg);
+  }
+}
+
+.base-toast-close:active:not([data-disabled]) {
+  background-color: oklch(92.2% 0 0deg);
+}
+
+.base-toast-close:focus-visible {
+  outline: 2px solid oklch(14.5% 0 0deg);
+  outline-offset: -1px;
 }
 
 .result-panel {

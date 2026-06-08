@@ -8,6 +8,13 @@ async function chooseSelectOption(page: Page, label: string, option: string) {
   await page.getByRole("option", { name: option, exact: true }).click();
 }
 
+async function expectErrorToast(page: Page, message: string) {
+  const toast = page.locator(".base-toast");
+
+  await expect(toast).toContainText("오류");
+  await expect(toast).toContainText(message);
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
   const styleTab = page.getByRole("tab", { name: "사마 스타일 분석" });
@@ -18,7 +25,7 @@ test.beforeEach(async ({ page }) => {
 test("empty submit shows a Korean validation error", async ({ page }) => {
   await page.getByRole("button", { name: "스타일 분석" }).click();
 
-  await expect(page.getByRole("alert")).toHaveText("닉네임을 입력해주세요.");
+  await expectErrorToast(page, "닉네임을 입력해주세요.");
 });
 
 test("invalid count shows a Korean validation error without calling the API", async ({ page }) => {
@@ -36,7 +43,7 @@ test("invalid count shows a Korean validation error without calling the API", as
   await page.getByLabel("대국 수").fill("0");
   await page.getByRole("button", { name: "스타일 분석" }).click();
 
-  await expect(page.getByRole("alert")).toHaveText("대국 수는 양의 정수로 입력해주세요.");
+  await expectErrorToast(page, "대국 수는 양의 정수로 입력해주세요.");
   expect(apiCalled).toBe(false);
 });
 

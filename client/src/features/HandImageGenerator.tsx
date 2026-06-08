@@ -1,6 +1,7 @@
 import { FormEvent, useRef, useState } from "react";
 import { parsePaiGroups, type ParsedTile } from "@shared/handParser";
 import { Button, CheckboxField, TextField } from "../components/BaseControls";
+import { useErrorToast } from "../components/ErrorToasts";
 
 type TileRenderData = ParsedTile & {
   image: HTMLImageElement;
@@ -91,9 +92,9 @@ export function HandImageGenerator() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [input, setInput] = useState(defaultHand);
   const [useNumberedTiles, setUseNumberedTiles] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [hasPreview, setHasPreview] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const showError = useErrorToast();
 
   async function renderHand(groups: ParsedTile[][]) {
     const basePath = assetBasePath(useNumberedTiles);
@@ -154,7 +155,6 @@ export function HandImageGenerator() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
     setHasPreview(false);
     setIsGenerating(true);
 
@@ -163,7 +163,7 @@ export function HandImageGenerator() {
       const tileCount = groups.reduce((sum, group) => sum + group.length, 0);
 
       if (tileCount === 0) {
-        setError("생성할 패를 입력해 주세요.");
+        showError("생성할 패를 입력해 주세요.");
         return;
       }
 
@@ -171,11 +171,11 @@ export function HandImageGenerator() {
       setHasPreview(true);
     } catch (caughtError) {
       if (caughtError instanceof Error && caughtError.message.startsWith("missing asset:")) {
-        setError("패 이미지 파일을 찾을 수 없습니다. 입력한 패를 확인해 주세요.");
+        showError("패 이미지 파일을 찾을 수 없습니다. 입력한 패를 확인해 주세요.");
         return;
       }
 
-      setError(describeParseError(caughtError));
+      showError(describeParseError(caughtError));
     } finally {
       setIsGenerating(false);
     }
@@ -221,12 +221,6 @@ export function HandImageGenerator() {
           onCheckedChange={setUseNumberedTiles}
         />
       </form>
-
-      {error ? (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      ) : null}
 
       <div className="hand-preview-panel" hidden={!hasPreview}>
         <div className="result-header">

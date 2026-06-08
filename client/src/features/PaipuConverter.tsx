@@ -7,6 +7,7 @@ import {
   zone
 } from "@shared/paipu";
 import { Button, TextField } from "../components/BaseControls";
+import { useErrorToast } from "../components/ErrorToasts";
 
 type ConversionResult = {
   accountId: number;
@@ -81,9 +82,9 @@ function convertPaipuUrl(rawValue: string): ConversionResult {
 
 export function PaipuConverter() {
   const [input, setInput] = useState("");
-  const [error, setError] = useState("");
   const [result, setResult] = useState<ConversionResult | null>(null);
   const [copyStatus, setCopyStatus] = useState("");
+  const showError = useErrorToast();
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -91,10 +92,9 @@ export function PaipuConverter() {
 
     try {
       setResult(convertPaipuUrl(input));
-      setError("");
     } catch (conversionError) {
       setResult(null);
-      setError(conversionError instanceof Error ? conversionError.message : "패보 주소를 변환할 수 없습니다.");
+      showError(conversionError instanceof Error ? conversionError.message : "패보 주소를 변환할 수 없습니다.");
     }
   }
 
@@ -107,7 +107,8 @@ export function PaipuConverter() {
       await navigator.clipboard.writeText(result.convertedUrl);
       setCopyStatus("복사됨");
     } catch {
-      setCopyStatus("복사 실패");
+      setCopyStatus("");
+      showError("복사 실패");
     }
   }
 
@@ -134,12 +135,6 @@ export function PaipuConverter() {
           </Button>
         </div>
       </form>
-
-      {error ? (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      ) : null}
 
       {result ? (
         <section className="result-panel" aria-labelledby="paipu-result-title">

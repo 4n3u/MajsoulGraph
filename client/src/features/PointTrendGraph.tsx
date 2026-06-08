@@ -3,6 +3,7 @@ import { buildPointTimeline, type GameRecord } from "@shared/pointTimeline";
 import { EChart } from "../charts/EChart";
 import { buildPointChartOptions } from "../charts/pointChartOptions";
 import { Button, ProgressBar, SelectField, TextField } from "../components/BaseControls";
+import { useErrorToast } from "../components/ErrorToasts";
 
 type ModeLabel = "사마" | "삼마";
 type SameNameIndex = "0" | "1" | "2";
@@ -103,10 +104,10 @@ export function PointTrendGraph() {
   const [mode, setMode] = useState<ModeLabel>("사마");
   const [sameName, setSameName] = useState<SameNameIndex>("0");
   const [status, setStatus] = useState("");
-  const [error, setError] = useState("");
   const [timeline, setTimeline] = useState<ReturnType<typeof buildPointTimeline> | null>(null);
   const requestIdRef = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const showError = useErrorToast();
   const isLoading = Boolean(status);
 
   useEffect(() => {
@@ -124,12 +125,11 @@ export function PointTrendGraph() {
     event.preventDefault();
 
     const trimmedNickname = nickname.trim();
-    setError("");
     setTimeline(null);
 
     if (!trimmedNickname) {
       setStatus("");
-      setError("닉네임을 입력해주세요.");
+      showError("닉네임을 입력해주세요.");
       return;
     }
 
@@ -224,7 +224,7 @@ export function PointTrendGraph() {
       if (isCurrentRequest()) {
         setTimeline(null);
         setStatus("");
-        setError(submitError instanceof Error ? submitError.message : "포인트 추이 그래프를 생성할 수 없습니다.");
+        showError(submitError instanceof Error ? submitError.message : "포인트 추이 그래프를 생성할 수 없습니다.");
         if (abortControllerRef.current === abortController) {
           abortControllerRef.current = null;
         }
@@ -276,12 +276,6 @@ export function PointTrendGraph() {
 
       {status ? (
         <ProgressBar label="포인트 추이 그래프 생성 중" />
-      ) : null}
-
-      {error ? (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
       ) : null}
 
       {timeline && chartOptions ? (

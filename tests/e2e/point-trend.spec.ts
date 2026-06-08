@@ -1,4 +1,11 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function expectErrorToast(page: Page, message: string) {
+  const toast = page.locator(".base-toast");
+
+  await expect(toast).toContainText("오류");
+  await expect(toast).toContainText(message);
+}
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
@@ -10,7 +17,7 @@ test.beforeEach(async ({ page }) => {
 test("empty submit shows a Korean validation error", async ({ page }) => {
   await page.getByRole("button", { name: "그래프 생성" }).click();
 
-  await expect(page.getByRole("alert")).toHaveText("닉네임을 입력해주세요.");
+  await expectErrorToast(page, "닉네임을 입력해주세요.");
 });
 
 test("generates point trend chart from mocked player records", async ({ page }) => {
@@ -140,7 +147,7 @@ test("shows Korean search error when API returns an English backend message", as
   await page.getByLabel("작혼 닉네임").fill("Tester");
   await page.getByRole("button", { name: "그래프 생성" }).click();
 
-  await expect(page.getByRole("alert")).toHaveText("닉네임 검색에 실패했습니다.");
+  await expectErrorToast(page, "닉네임 검색에 실패했습니다.");
   await expect(page.getByText("Amae-Koromo request failed")).toHaveCount(0);
 });
 
@@ -152,7 +159,7 @@ test("shows Korean search error when the request is rejected", async ({ page }) 
   await page.getByLabel("작혼 닉네임").fill("Tester");
   await page.getByRole("button", { name: "그래프 생성" }).click();
 
-  await expect(page.getByRole("alert")).toHaveText("닉네임 검색에 실패했습니다.");
+  await expectErrorToast(page, "닉네임 검색에 실패했습니다.");
   await expect(page.getByText("Failed to fetch")).toHaveCount(0);
 });
 
@@ -234,6 +241,6 @@ test("shows Korean timeline error when records cannot be analyzed", async ({ pag
   await page.getByLabel("작혼 닉네임").fill("Tester");
   await page.getByRole("button", { name: "그래프 생성" }).click();
 
-  await expect(page.getByRole("alert")).toHaveText("패보를 분석할 수 없습니다. 대국 기록을 확인해 주세요.");
+  await expectErrorToast(page, "패보를 분석할 수 없습니다. 대국 기록을 확인해 주세요.");
   await expect(page.getByText("Unsupported game mode")).toHaveCount(0);
 });
