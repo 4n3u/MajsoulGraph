@@ -32,6 +32,40 @@ test("selecting a tool updates the visible placeholder title", async ({ page }) 
   );
 });
 
+test("placeholder heading ids are generated and unique after changing tools", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByRole("tab", { name: "패보 주소 변환" }).click();
+
+  const { duplicateIds, placeholderHeadingIds } = await page
+    .locator(".app-shell")
+    .evaluate((appShell) => {
+      const ids = Array.from(
+        appShell.querySelectorAll<HTMLElement>("[id]"),
+        (element) => element.id
+      );
+      const placeholderHeadingIds = Array.from(
+        appShell.querySelectorAll<HTMLHeadingElement>(".tool-placeholder h2"),
+        (element) => element.id
+      );
+      const seen = new Set<string>();
+
+      const duplicateIds = ids.filter((id) => {
+        if (seen.has(id)) {
+          return true;
+        }
+
+        seen.add(id);
+        return false;
+      });
+
+      return { duplicateIds, placeholderHeadingIds };
+    });
+
+  expect(duplicateIds).toEqual([]);
+  expect(placeholderHeadingIds).not.toContain("tool-placeholder-title");
+});
+
 test("mobile shell uses labelled top navigation and one-column layout", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
