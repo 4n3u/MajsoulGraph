@@ -5,7 +5,7 @@ import { buildPointChartOptions } from "../charts/pointChartOptions";
 import { Button, SelectField, TextField } from "../components/BaseControls";
 
 type ModeLabel = "사마" | "삼마";
-type SameNameIndex = "0" | "1" | "2" | "";
+type SameNameIndex = "0" | "1" | "2";
 
 type ModeConfig = {
   apiMode: "pl4" | "pl3";
@@ -49,7 +49,6 @@ const modeOptions: ReadonlyArray<{ label: string; value: ModeLabel }> = [
 ];
 
 const sameNameOptions: ReadonlyArray<{ label: string; value: SameNameIndex }> = [
-  { label: "선택", value: "" },
   { label: "0", value: "0" },
   { label: "1", value: "1" },
   { label: "2", value: "2" }
@@ -102,7 +101,7 @@ async function nextFrame(): Promise<void> {
 export function PointTrendGraph() {
   const [nickname, setNickname] = useState("");
   const [mode, setMode] = useState<ModeLabel>("사마");
-  const [sameName, setSameName] = useState<SameNameIndex>("");
+  const [sameName, setSameName] = useState<SameNameIndex>("0");
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [timeline, setTimeline] = useState<ReturnType<typeof buildPointTimeline> | null>(null);
@@ -131,12 +130,6 @@ export function PointTrendGraph() {
     if (!trimmedNickname) {
       setStatus("");
       setError("닉네임을 입력해주세요.");
-      return;
-    }
-
-    if (sameName === "") {
-      setStatus("");
-      setError("동일 닉네임 번호를 선택해주세요.");
       return;
     }
 
@@ -170,7 +163,7 @@ export function PointTrendGraph() {
       const player = searchBody.players?.[sameNameIndex];
 
       if (!player) {
-        throw new Error("선택한 동일 닉네임 번호의 플레이어를 찾을 수 없습니다.");
+        throw new Error("선택한 동일 닉네임 구분의 플레이어를 찾을 수 없습니다.");
       }
 
       if (typeof player.latestTimestamp !== "number") {
@@ -249,7 +242,7 @@ export function PointTrendGraph() {
         <div className="point-form-grid">
           <TextField
             id="point-nickname-input"
-            label="Mahjong Soul 닉네임"
+            label="작혼 닉네임"
             name="nickname"
             onValueChange={setNickname}
             disabled={isLoading}
@@ -268,7 +261,7 @@ export function PointTrendGraph() {
           />
           <SelectField
             id="point-same-name-select"
-            label="동일 닉네임 번호"
+            label="동일 닉네임 구분"
             name="same-name"
             onValueChange={setSameName}
             options={sameNameOptions}

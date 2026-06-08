@@ -176,7 +176,7 @@ export function StyleAnalysis() {
         <div className="style-form-grid">
           <TextField
             id="style-nickname-input"
-            label="Mahjong Soul 닉네임"
+            label="작혼 닉네임"
             name="nickname"
             onValueChange={setNickname}
             disabled={isLoading}
@@ -199,7 +199,7 @@ export function StyleAnalysis() {
           />
           <SelectField
             id="style-same-name-select"
-            label="동일 닉네임 번호"
+            label="동일 닉네임 구분"
             name="same-name"
             onValueChange={setSameName}
             options={sameNameOptions}

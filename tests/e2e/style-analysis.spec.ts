@@ -32,7 +32,7 @@ test("invalid count shows a Korean validation error without calling the API", as
     });
   });
 
-  await page.getByLabel("Mahjong Soul 닉네임").fill("Tester");
+  await page.getByLabel("작혼 닉네임").fill("Tester");
   await page.getByLabel("대국 수").fill("0");
   await page.getByRole("button", { name: "분석하기" }).click();
 
@@ -77,9 +77,9 @@ test("renders style analysis result from mocked API response", async ({ page }) 
     });
   });
 
-  await page.getByLabel("Mahjong Soul 닉네임").fill("Tester");
+  await page.getByLabel("작혼 닉네임").fill("Tester");
   await page.getByLabel("대국 수").fill("50");
-  await chooseSelectOption(page, "동일 닉네임 번호", "1");
+  await chooseSelectOption(page, "동일 닉네임 구분", "1");
   await page.getByRole("button", { name: "분석하기" }).click();
 
   const result = page.getByLabel("스타일 분석 결과");

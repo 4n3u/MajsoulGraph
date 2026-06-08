@@ -26,7 +26,7 @@ test("selecting the style tool shows the analysis form", async ({ page }) => {
   await page.getByRole("tab", { name: "사마 스타일 분석" }).click();
 
   await expect(page.getByRole("heading", { name: "사마 스타일 분석" })).toBeVisible();
-  await expect(page.getByLabel("Mahjong Soul 닉네임")).toBeVisible();
+  await expect(page.getByLabel("작혼 닉네임")).toBeVisible();
   await expect(page.getByRole("button", { name: "분석하기" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "사마 스타일 분석" })).toHaveAttribute(
     "aria-selected",
