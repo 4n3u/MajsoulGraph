@@ -752,9 +752,11 @@ h1 {
 
 .style-result-head {
   align-items: start;
+  border-top: 1px solid var(--border-subtle);
   display: grid;
   gap: 14px;
   grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+  padding-top: 14px;
 }
 
 .style-verdict {
@@ -788,10 +790,8 @@ h1 {
 }
 
 .style-chart {
-  border-top: 1px solid var(--border-subtle);
   height: 420px;
   min-width: 0;
-  padding-top: 12px;
   width: 100%;
 }
 
