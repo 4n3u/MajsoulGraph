@@ -1,0 +1,98 @@
+import { expect, test } from "@playwright/test";
+
+test.beforeEach(async ({ page }) => {
+  await page.goto("/");
+  const pointsTab = page.getByRole("tab", { name: "포인트 추이 그래프" });
+  await expect(pointsTab).toBeVisible();
+  await pointsTab.click();
+});
+
+test("empty submit shows a Korean validation error", async ({ page }) => {
+  await page.getByRole("button", { name: "그래프 생성" }).click();
+
+  await expect(page.getByRole("alert")).toHaveText("닉네임을 입력해주세요.");
+});
+
+test("generates point trend chart from mocked player records", async ({ page }) => {
+  const requestedUrls: string[] = [];
+
+  await page.route("**/api/search-player**", async (route) => {
+    const url = new URL(route.request().url());
+    requestedUrls.push(url.toString());
+
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        players: [
+          { id: 1001, nickname: "Tester", latestTimestamp: 1700000500 },
+          { id: 2002, nickname: "Tester", latestTimestamp: 1700000400 }
+        ]
+      })
+    });
+  });
+
+  await page.route("**/api/player-records**", async (route) => {
+    const url = new URL(route.request().url());
+    requestedUrls.push(url.toString());
+
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        records: [
+          {
+            modeId: 16,
+            startTime: 1700000300,
+            endTime: 1700000600,
+            players: [
+              { accountId: 2002, score: 45000, level: 10301, gradingScore: 45 },
+              { accountId: 1001, score: 25000, level: 10301, gradingScore: 5 },
+              { accountId: 3003, score: 20000, level: 10301, gradingScore: -15 },
+              { accountId: 4004, score: 10000, level: 10301, gradingScore: -35 }
+            ]
+          },
+          {
+            modeId: 16,
+            startTime: 1700000000,
+            endTime: 1700000200,
+            players: [
+              { accountId: 1001, score: 45000, level: 10301, gradingScore: 45 },
+              { accountId: 2002, score: 30000, level: 10301, gradingScore: 15 },
+              { accountId: 3003, score: 20000, level: 10301, gradingScore: -15 },
+              { accountId: 4004, score: 5000, level: 10301, gradingScore: -45 }
+            ]
+          }
+        ]
+      })
+    });
+  });
+
+  await page.getByLabel("Mahjong Soul 닉네임").fill("Tester");
+  await page.getByLabel("동일 닉네임 번호").selectOption("0");
+  await page.getByRole("button", { name: "그래프 생성" }).click();
+
+  await expect(page.getByText("패보를 분석하는 중...")).toBeVisible();
+  const result = page.getByLabel("포인트 추이 결과");
+  await expect(result.getByRole("img", { name: "포인트 추이 그래프" })).toBeVisible();
+  await expect(result.getByText("대국 수")).toBeVisible();
+  await expect(result.getByText("2", { exact: true })).toBeVisible();
+  await expect(result.getByText("현재 pt")).toBeVisible();
+  await expect(result.getByText("650", { exact: true }).first()).toBeVisible();
+  await expect(result.getByText("최고 pt")).toBeVisible();
+  await expect(result.getByText("최저 pt")).toBeVisible();
+  await expect(result.getByText("최고 등급")).toBeVisible();
+  await expect(result.getByText("걸1", { exact: true })).toBeVisible();
+  await expect(result.getByRole("heading", { name: "최근 등급 기록" })).toBeVisible();
+  await expect(result.getByText("사3 -> 걸1")).toBeVisible();
+
+  expect(requestedUrls).toHaveLength(2);
+  expect(requestedUrls[0]).toContain("/api/search-player?");
+  expect(requestedUrls[0]).toContain("mode=pl4");
+  expect(requestedUrls[0]).toContain("nickname=Tester");
+  expect(requestedUrls[1]).toContain("/api/player-records?");
+  expect(requestedUrls[1]).toContain("mode=pl4");
+  expect(requestedUrls[1]).toContain("playerId=1001");
+  expect(requestedUrls[1]).toContain("startTime=1700000500");
+  expect(requestedUrls[1]).toContain("gameModes=16%2C15%2C12%2C11%2C9%2C8");
+});
