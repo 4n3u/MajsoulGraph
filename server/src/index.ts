@@ -1,4 +1,5 @@
 import express from "express";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -6,7 +7,9 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export function createApp() {
   const app = express();
-  const clientDist = path.resolve(dirname, "../client");
+  const bundledClientDist = path.resolve(dirname, "../client");
+  const sourceClientDist = path.resolve(dirname, "../../dist/client");
+  const clientDist = existsSync(path.join(bundledClientDist, "index.html")) ? bundledClientDist : sourceClientDist;
 
   app.get("/api/health", (_request, response) => {
     response.json({ ok: true });
@@ -19,7 +22,7 @@ export function createApp() {
   app.use(express.static(clientDist));
 
   app.use((_request, response) => {
-    response.sendFile(path.join(clientDist, "index.html"));
+    response.sendFile("index.html", { root: clientDist });
   });
 
   return app;

@@ -29,4 +29,13 @@ describe("scaffold", () => {
       expect(await response.json()).toEqual({ error: { code: "not_found", message: "Route not found" } });
     });
   });
+
+  it("serves the app shell for non-API routes after build", async () => {
+    await withServer(async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/some/client/route`);
+      expect(response.status).toBe(200);
+      expect(response.headers.get("content-type")).toContain("text/html");
+      expect(await response.text()).toContain("id=\"root\"");
+    });
+  });
 });
