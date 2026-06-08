@@ -44,7 +44,13 @@ const danNames = ["사", "걸", "호", "성", "천", "천"] as const;
 const ptBase: Record<number, number> = { 301: 6, 302: 7, 303: 10, 401: 14, 402: 16, 403: 18, 501: 20, 502: 30, 503: 45 };
 
 export function levelDan(level: number): string {
-  return `${danNames[Math.floor(level / 100) % 100 - 2] ?? ""}${level % 100}`;
+  const index = Math.floor(level / 100) % 100 - 2;
+  const pythonIndex = index < 0 ? danNames.length + index : index;
+  const name = danNames[pythonIndex];
+  if (name === undefined) {
+    throw new Error(`Unsupported rank label for level ${level}`);
+  }
+  return `${name}${level % 100}`;
 }
 
 export function levelPtBase(level: number): number {

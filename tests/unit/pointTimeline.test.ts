@@ -3,7 +3,9 @@ import { buildPointTimeline, getRank, levelDan, levelPtBase } from "@shared/poin
 
 describe("rank labels and point bases", () => {
   it("ports rank label and point base behavior", () => {
+    expect(levelDan(10101)).toBe("천1");
     expect(levelDan(10301)).toBe("걸1");
+    expect(() => levelDan(10801)).toThrow("Unsupported rank label");
     expect(levelPtBase(10301)).toBe(600);
     expect(levelPtBase(10701)).toBe(5000);
     expect(() => levelPtBase(10203)).toThrow("Unsupported point base");
