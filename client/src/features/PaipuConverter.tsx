@@ -16,8 +16,10 @@ type ConversionResult = {
   title: string;
 };
 
-const ordinaryUuidPattern = /^\d{6}-[0-9a-z]+-[0-9a-z]+$/;
-const anonymousUuidPattern = /^[0-9a-z]+-[0-9a-z]+-[0-9a-z]+$/;
+const legacyUuidTailPattern = "[0-9a-z]{8}-[0-9a-z]{8}";
+const standardUuidTailPattern = "[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}";
+const ordinaryUuidPattern = new RegExp(`^\\d{6}-(?:${legacyUuidTailPattern}|${standardUuidTailPattern})$`);
+const anonymousUuidPattern = new RegExp(`^[0-9a-z]{6}-(?:${legacyUuidTailPattern}|${standardUuidTailPattern})$`);
 const paipuPattern = /^([^_]+)_a(\d+)(?:_2)?$/;
 
 function convertPaipuUrl(rawValue: string): ConversionResult {

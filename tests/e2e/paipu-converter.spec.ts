@@ -4,6 +4,10 @@ const ordinaryUrl =
   "https://game.mahjongsoul.com/?paipu=240101-12345678-abcdef12_a280178470";
 const anonymousUrl =
   "https://game.mahjongsoul.com/?paipu=jmjlln-prtvxz13-79bdfh46_a280178470_2";
+const standardUuidOrdinaryUrl =
+  "https://game.mahjongsoul.com/?paipu=260608-1229bf0c-abac-4517-b2f6-f6c07714d154_a418784756";
+const standardUuidAnonymousUrl =
+  "https://game.mahjongsoul.com/?paipu=jojqlu-prs038u7-799c-685c-iaog-rjqfnojnxmrr_a418784756_2";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
@@ -20,6 +24,14 @@ test("converts ordinary paipu URL to anonymous URL", async ({ page }) => {
   await expect(page.getByLabel("변환된 패보 주소")).toHaveValue(anonymousUrl);
 });
 
+test("converts ordinary standard UUID paipu URL to anonymous URL", async ({ page }) => {
+  await page.getByLabel("패보 주소 입력").fill(standardUuidOrdinaryUrl);
+  await page.getByRole("button", { name: "변환" }).click();
+
+  await expect(page.getByRole("heading", { name: "변환된 익명 패보 주소" })).toBeVisible();
+  await expect(page.getByLabel("변환된 패보 주소")).toHaveValue(standardUuidAnonymousUrl);
+});
+
 test("converts anonymous paipu URL to ordinary URL", async ({ page }) => {
   await page.getByLabel("패보 주소 입력").fill(anonymousUrl);
   await page.getByRole("button", { name: "변환" }).click();
@@ -28,6 +40,14 @@ test("converts anonymous paipu URL to ordinary URL", async ({ page }) => {
   await expect(page.getByText("계정 ID")).toBeVisible();
   await expect(page.getByText("친구 ID")).toBeVisible();
   await expect(page.getByLabel("변환된 패보 주소")).toHaveValue(ordinaryUrl);
+});
+
+test("converts anonymous standard UUID paipu URL to ordinary URL", async ({ page }) => {
+  await page.getByLabel("패보 주소 입력").fill(standardUuidAnonymousUrl);
+  await page.getByRole("button", { name: "변환" }).click();
+
+  await expect(page.getByRole("heading", { name: "변환된 일반 패보 주소" })).toBeVisible();
+  await expect(page.getByLabel("변환된 패보 주소")).toHaveValue(standardUuidOrdinaryUrl);
 });
 
 test("shows a Korean error for invalid input", async ({ page }) => {
