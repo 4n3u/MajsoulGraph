@@ -1,4 +1,12 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function chooseSelectOption(page: Page, label: string, option: string) {
+  await page
+    .locator(".base-select-field", { hasText: label })
+    .locator(".base-select-trigger")
+    .click();
+  await page.getByRole("option", { name: option, exact: true }).click();
+}
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
@@ -71,7 +79,7 @@ test("renders style analysis result from mocked API response", async ({ page }) 
 
   await page.getByLabel("Mahjong Soul 닉네임").fill("Tester");
   await page.getByLabel("대국 수").fill("50");
-  await page.getByLabel("동일 닉네임 번호").selectOption("1");
+  await chooseSelectOption(page, "동일 닉네임 번호", "1");
   await page.getByRole("button", { name: "분석하기" }).click();
 
   const result = page.getByLabel("스타일 분석 결과");

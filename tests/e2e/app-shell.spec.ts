@@ -34,6 +34,18 @@ test("selecting the style tool shows the analysis form", async ({ page }) => {
   );
 });
 
+test("forms use Base UI select triggers instead of native select controls", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.locator("select")).toHaveCount(0);
+  await expect(page.locator(".base-select-trigger")).toHaveCount(2);
+
+  await page.getByRole("tab", { name: "사마 스타일 분석" }).click();
+
+  await expect(page.locator("select")).toHaveCount(0);
+  await expect(page.locator(".base-select-trigger")).toHaveCount(1);
+});
+
 test("placeholder heading ids are generated and unique after changing tools", async ({ page }) => {
   await page.goto("/");
 

@@ -1,5 +1,6 @@
 import { FormEvent, useRef, useState } from "react";
 import { parsePaiGroups, type ParsedTile } from "@shared/handParser";
+import { Button, CheckboxField, TextField } from "../components/BaseControls";
 
 type TileRenderData = ParsedTile & {
   image: HTMLImageElement;
@@ -199,30 +200,26 @@ export function HandImageGenerator() {
       </div>
 
       <form className="hand-generator-form" onSubmit={handleSubmit}>
-        <label className="field-label" htmlFor="hand-input">
-          패 입력
-        </label>
         <div className="input-row">
-          <input
+          <TextField
             id="hand-input"
+            label="패 입력"
+            onValueChange={setInput}
+            placeholder="m123 p456 s789 z123"
             type="text"
             value={input}
-            onChange={(event) => setInput(event.target.value)}
-            placeholder="m123 p456 s789 z123"
           />
-          <button className="primary-button" type="submit" disabled={isGenerating}>
+          <Button className="primary-button" type="submit" disabled={isGenerating}>
             {isGenerating ? "생성 중" : "생성"}
-          </button>
+          </Button>
         </div>
 
-        <label className="checkbox-field">
-          <input
-            type="checkbox"
-            checked={useNumberedTiles}
-            onChange={(event) => setUseNumberedTiles(event.target.checked)}
-          />
-          <span>숫자 표기</span>
-        </label>
+        <CheckboxField
+          checked={useNumberedTiles}
+          label="숫자 표기"
+          name="numbered-tiles"
+          onCheckedChange={setUseNumberedTiles}
+        />
       </form>
 
       {error ? (
@@ -234,9 +231,9 @@ export function HandImageGenerator() {
       <div className="hand-preview-panel" hidden={!hasPreview}>
         <div className="result-header">
           <h3>생성된 손패 이미지</h3>
-          <button className="secondary-button" type="button" onClick={handleDownload}>
+          <Button className="secondary-button" type="button" onClick={handleDownload}>
             PNG 다운로드
-          </button>
+          </Button>
         </div>
         <canvas ref={canvasRef} aria-label="생성된 손패 이미지" />
       </div>

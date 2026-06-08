@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { buildPointTimeline, type GameRecord } from "@shared/pointTimeline";
 import { EChart } from "../charts/EChart";
 import { buildPointChartOptions } from "../charts/pointChartOptions";
+import { Button, SelectField, TextField } from "../components/BaseControls";
 
 type ModeLabel = "사마" | "삼마";
 type SameNameIndex = "0" | "1" | "2" | "";
@@ -41,6 +42,18 @@ const modeConfig: Record<ModeLabel, ModeConfig> = {
     historyLevel: 20203
   }
 };
+
+const modeOptions: ReadonlyArray<{ label: string; value: ModeLabel }> = [
+  { label: "사마", value: "사마" },
+  { label: "삼마", value: "삼마" }
+];
+
+const sameNameOptions: ReadonlyArray<{ label: string; value: SameNameIndex }> = [
+  { label: "선택", value: "" },
+  { label: "0", value: "0" },
+  { label: "1", value: "1" },
+  { label: "2", value: "2" }
+];
 
 function formatDate(timestamp: number): string {
   return new Intl.DateTimeFormat("ko-KR", {
@@ -233,50 +246,38 @@ export function PointTrendGraph() {
       </div>
 
       <form className="point-trend-form" noValidate onSubmit={handleSubmit}>
-        <label className="field-label" htmlFor="point-nickname-input">
-          Mahjong Soul 닉네임
-        </label>
         <div className="point-form-grid">
-          <input
+          <TextField
             id="point-nickname-input"
+            label="Mahjong Soul 닉네임"
             name="nickname"
+            onValueChange={setNickname}
+            disabled={isLoading}
+            placeholder="닉네임"
             type="text"
             value={nickname}
-            onChange={(event) => setNickname(event.target.value)}
-            placeholder="닉네임"
-            disabled={isLoading}
           />
-          <label className="compact-field" htmlFor="point-mode-select">
-            <span>모드</span>
-            <select
-              id="point-mode-select"
-              name="mode"
-              value={mode}
-              onChange={(event) => setMode(event.target.value as ModeLabel)}
-              disabled={isLoading}
-            >
-              <option value="사마">사마</option>
-              <option value="삼마">삼마</option>
-            </select>
-          </label>
-          <label className="compact-field" htmlFor="point-same-name-select">
-            <span>동일 닉네임 번호</span>
-            <select
-              id="point-same-name-select"
-              name="same-name"
-              value={sameName}
-              onChange={(event) => setSameName(event.target.value as SameNameIndex)}
-              disabled={isLoading}
-            >
-              <option value="">선택</option>
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-            </select>
-          </label>
-          <button className="primary-button" type="submit" disabled={isLoading}>
+          <SelectField
+            id="point-mode-select"
+            label="모드"
+            name="mode"
+            onValueChange={setMode}
+            options={modeOptions}
+            disabled={isLoading}
+            value={mode}
+          />
+          <SelectField
+            id="point-same-name-select"
+            label="동일 닉네임 번호"
+            name="same-name"
+            onValueChange={setSameName}
+            options={sameNameOptions}
+            disabled={isLoading}
+            value={sameName}
+          />
+          <Button className="primary-button" type="submit" disabled={isLoading}>
             그래프 생성
-          </button>
+          </Button>
         </div>
       </form>
 

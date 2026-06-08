@@ -1,4 +1,12 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function chooseSelectOption(page: Page, label: string, option: string) {
+  await page
+    .locator(".base-select-field", { hasText: label })
+    .locator(".base-select-trigger")
+    .click();
+  await page.getByRole("option", { name: option, exact: true }).click();
+}
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
@@ -69,7 +77,7 @@ test("generates point trend chart from mocked player records", async ({ page }) 
   });
 
   await page.getByLabel("Mahjong Soul 닉네임").fill("Tester");
-  await page.getByLabel("동일 닉네임 번호").selectOption("0");
+  await chooseSelectOption(page, "동일 닉네임 번호", "0");
   await page.getByRole("button", { name: "그래프 생성" }).click();
 
   await expect(page.getByText("패보를 분석하는 중...")).toBeVisible();
@@ -136,7 +144,7 @@ test("shows Korean search error when API returns an English backend message", as
   });
 
   await page.getByLabel("Mahjong Soul 닉네임").fill("Tester");
-  await page.getByLabel("동일 닉네임 번호").selectOption("0");
+  await chooseSelectOption(page, "동일 닉네임 번호", "0");
   await page.getByRole("button", { name: "그래프 생성" }).click();
 
   await expect(page.getByRole("alert")).toHaveText("닉네임 검색에 실패했습니다.");
@@ -149,7 +157,7 @@ test("shows Korean search error when the request is rejected", async ({ page }) 
   });
 
   await page.getByLabel("Mahjong Soul 닉네임").fill("Tester");
-  await page.getByLabel("동일 닉네임 번호").selectOption("0");
+  await chooseSelectOption(page, "동일 닉네임 번호", "0");
   await page.getByRole("button", { name: "그래프 생성" }).click();
 
   await expect(page.getByRole("alert")).toHaveText("닉네임 검색에 실패했습니다.");
@@ -185,13 +193,17 @@ test("locks point form while a request is in flight", async ({ page }) => {
   });
 
   await page.getByLabel("Mahjong Soul 닉네임").fill("Tester");
-  await page.getByLabel("동일 닉네임 번호").selectOption("0");
+  await chooseSelectOption(page, "동일 닉네임 번호", "0");
   await page.getByRole("button", { name: "그래프 생성" }).click();
   await searchRequested;
 
   await expect(page.getByLabel("Mahjong Soul 닉네임")).toBeDisabled();
-  await expect(page.getByLabel("모드")).toBeDisabled();
-  await expect(page.getByLabel("동일 닉네임 번호")).toBeDisabled();
+  await expect(
+    page.locator(".base-select-field", { hasText: "모드" }).locator(".base-select-trigger")
+  ).toBeDisabled();
+  await expect(
+    page.locator(".base-select-field", { hasText: "동일 닉네임 번호" }).locator(".base-select-trigger")
+  ).toBeDisabled();
   await expect(page.getByRole("button", { name: "그래프 생성" })).toBeDisabled();
 
   releaseSearch();
@@ -229,7 +241,7 @@ test("shows Korean timeline error when records cannot be analyzed", async ({ pag
   });
 
   await page.getByLabel("Mahjong Soul 닉네임").fill("Tester");
-  await page.getByLabel("동일 닉네임 번호").selectOption("0");
+  await chooseSelectOption(page, "동일 닉네임 번호", "0");
   await page.getByRole("button", { name: "그래프 생성" }).click();
 
   await expect(page.getByRole("alert")).toHaveText("패보를 분석할 수 없습니다. 대국 기록을 확인해 주세요.");

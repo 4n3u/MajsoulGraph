@@ -6,6 +6,7 @@ import {
   mat2Friend,
   zone
 } from "@shared/paipu";
+import { Button, TextField } from "../components/BaseControls";
 
 type ConversionResult = {
   accountId: number;
@@ -115,22 +116,20 @@ export function PaipuConverter() {
       </div>
 
       <form className="converter-form" noValidate onSubmit={handleSubmit}>
-        <label className="field-label" htmlFor="paipu-url-input">
-          패보 주소 입력
-        </label>
         <div className="input-row">
-          <input
+          <TextField
             id="paipu-url-input"
-            name="paipu-url"
-            type="text"
+            label="패보 주소 입력"
             inputMode="url"
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
+            name="paipu-url"
+            onValueChange={setInput}
             placeholder="https://game.mahjongsoul.com/?paipu=..."
+            type="text"
+            value={input}
           />
-          <button className="primary-button" type="submit">
+          <Button className="primary-button" type="submit">
             변환
-          </button>
+          </Button>
         </div>
       </form>
 
@@ -144,9 +143,9 @@ export function PaipuConverter() {
         <section className="result-panel" aria-labelledby="paipu-result-title">
           <div className="result-header">
             <h3 id="paipu-result-title">{result.title}</h3>
-            <button className="secondary-button" type="button" onClick={copyConvertedUrl}>
+            <Button className="secondary-button" type="button" onClick={copyConvertedUrl}>
               복사
-            </button>
+            </Button>
           </div>
           <textarea
             aria-label="변환된 패보 주소"

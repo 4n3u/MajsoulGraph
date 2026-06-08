@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { ProcessedStyleStats, StyleIntensity, StyleLabel } from "@shared/styleAnalysis";
 import { EChart } from "../charts/EChart";
 import { buildStyleChartOptions } from "../charts/styleChartOptions";
+import { Button, SelectField, TextField } from "../components/BaseControls";
 
 type SameNameIndex = "0" | "1" | "2";
 
@@ -36,6 +37,12 @@ const statLabels: Array<{ key: keyof ProcessedStyleStats; label: string }> = [
   { key: "riichiTurn", label: "리치순" },
   { key: "riichiFirstRate", label: "리치 선제율" },
   { key: "riichiChaseRate", label: "리치 추격률" }
+];
+
+const sameNameOptions: ReadonlyArray<{ label: string; value: SameNameIndex }> = [
+  { label: "0", value: "0" },
+  { label: "1", value: "1" },
+  { label: "2", value: "2" }
 ];
 
 async function parseStyleResponse(response: Response): Promise<StyleResponse> {
@@ -166,51 +173,42 @@ export function StyleAnalysis() {
       </div>
 
       <form className="style-analysis-form" noValidate onSubmit={handleSubmit}>
-        <label className="field-label" htmlFor="style-nickname-input">
-          Mahjong Soul 닉네임
-        </label>
         <div className="style-form-grid">
-          <input
+          <TextField
             id="style-nickname-input"
+            label="Mahjong Soul 닉네임"
             name="nickname"
+            onValueChange={setNickname}
+            disabled={isLoading}
+            placeholder="닉네임"
             type="text"
             value={nickname}
-            onChange={(event) => setNickname(event.target.value)}
-            placeholder="닉네임"
-            disabled={isLoading}
           />
-          <label className="compact-field" htmlFor="style-count-input">
-            <span>대국 수</span>
-            <input
-              id="style-count-input"
-              name="count"
-              type="number"
-              min="1"
-              step="1"
-              inputMode="numeric"
-              value={count}
-              onChange={(event) => setCount(event.target.value)}
-              placeholder="전체"
-              disabled={isLoading}
-            />
-          </label>
-          <label className="compact-field" htmlFor="style-same-name-select">
-            <span>동일 닉네임 번호</span>
-            <select
-              id="style-same-name-select"
-              name="same-name"
-              value={sameName}
-              onChange={(event) => setSameName(event.target.value as SameNameIndex)}
-              disabled={isLoading}
-            >
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-            </select>
-          </label>
-          <button className="primary-button" type="submit" disabled={isLoading}>
+          <TextField
+            id="style-count-input"
+            label="대국 수"
+            name="count"
+            onValueChange={setCount}
+            disabled={isLoading}
+            inputMode="numeric"
+            min="1"
+            placeholder="전체"
+            step="1"
+            type="number"
+            value={count}
+          />
+          <SelectField
+            id="style-same-name-select"
+            label="동일 닉네임 번호"
+            name="same-name"
+            onValueChange={setSameName}
+            options={sameNameOptions}
+            disabled={isLoading}
+            value={sameName}
+          />
+          <Button className="primary-button" type="submit" disabled={isLoading}>
             {isLoading ? "분석 중..." : "분석하기"}
-          </button>
+          </Button>
         </div>
       </form>
 

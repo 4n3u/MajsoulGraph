@@ -81,4 +81,13 @@ describe("scaffold", () => {
       expect(block, `${selector} should not set a card radius`).not.toMatch(/^\s*border-radius:/m);
     }
   });
+
+  it("uses a neutral default palette instead of the previous green theme", async () => {
+    const css = await readFile(path.resolve("client/src/styles.css"), "utf8");
+    const removedGreenPalette = ["#244c31", "#45604c", "#bad2c1", "#eef6f0", "#67706b", "#56615a"];
+
+    for (const color of removedGreenPalette) {
+      expect(css).not.toContain(color);
+    }
+  });
 });
