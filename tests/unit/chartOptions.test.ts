@@ -40,6 +40,27 @@ describe("style chart options", () => {
     );
   });
 
+  it("includes legacy Korean stat guides and style region labels", () => {
+    const options = buildStyleChartOptions({ x: 0, y: 0, nickname: "Center" });
+    const serialized = JSON.stringify(options);
+
+    expect(serialized).toContain("화료율");
+    expect(serialized).toContain("평균 화료 타점");
+    expect(serialized).toContain("리치 추격률");
+    expect(serialized).toContain("후공 반격형");
+    expect(options.series).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "scatter",
+          data: expect.arrayContaining([
+            expect.objectContaining({ name: "화료율", value: [-20, 3.9] }),
+            expect.objectContaining({ name: "리치 추격률", value: [14.4, 20] })
+          ])
+        })
+      ])
+    );
+  });
+
   it("pins style graph bounds and guide lines", () => {
     const options = buildStyleChartOptions({ x: 0, y: 0, nickname: "Center" });
 

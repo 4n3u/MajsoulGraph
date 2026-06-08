@@ -7,11 +7,27 @@ type StyleChartInput = {
 };
 
 const guidePoints = [
-  { name: "Balanced", value: [0, 0] },
-  { name: "Attack", value: [-18, 16] },
-  { name: "Defense", value: [18, -16] },
-  { name: "Pressure", value: [-16, -18] },
-  { name: "Counter", value: [16, 18] }
+  { name: "화료율", value: [-20, 3.9] },
+  { name: "방총율", value: [-4.6, 20] },
+  { name: "후로율", value: [-20, -7.2] },
+  { name: "리치율", value: [-0.6, 20] },
+  { name: "다마율", value: [9.6, -20] },
+  { name: "평균 화료 타점", value: [20, -3.1] },
+  { name: "평균 화료순", value: [20, 14.4] },
+  { name: "평균 방총 타점", value: [-20, 17.5] },
+  { name: "유국 텐파이율", value: [-14.3, 20] },
+  { name: "리치순", value: [20, 15.5] },
+  { name: "리치 선제율", value: [-5.1, -20] },
+  { name: "리치 추격률", value: [14.4, 20] }
+] as const;
+
+const styleRegionLabels = [
+  { name: "적극 참여형", value: [-18, 11] },
+  { name: "후공 반격형", value: [16, 17] },
+  { name: "후로 속공형", value: [-17, -13] },
+  { name: "멘젠 고득점형", value: [17, -8] },
+  { name: "선공 회피형", value: [-12, -23] },
+  { name: "철벽 방어형", value: [13, 23] }
 ] as const;
 
 export function buildStyleChartOptions(input: StyleChartInput): ChartOption {
@@ -94,6 +110,20 @@ export function buildStyleChartOptions(input: StyleChartInput): ChartOption {
           position: "right"
         },
         data: [{ name: input.nickname, value: [input.x, input.y] }]
+      },
+      {
+        name: "Style regions",
+        type: "scatter",
+        silent: true,
+        symbolSize: 0,
+        label: {
+          show: true,
+          formatter: "{b}",
+          color: "#475569",
+          fontWeight: 600,
+          position: "inside"
+        },
+        data: styleRegionLabels.map((label) => ({ name: label.name, value: [...label.value] }))
       }
     ]
   };
