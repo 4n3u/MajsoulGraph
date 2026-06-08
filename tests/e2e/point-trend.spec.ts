@@ -96,3 +96,64 @@ test("generates point trend chart from mocked player records", async ({ page }) 
   expect(requestedUrls[1]).toContain("startTime=1700000500");
   expect(requestedUrls[1]).toContain("gameModes=16%2C15%2C12%2C11%2C9%2C8");
 });
+
+test("shows Korean search error when API returns an English backend message", async ({ page }) => {
+  await page.route("**/api/search-player**", async (route) => {
+    await route.fulfill({
+      status: 502,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: {
+          code: "upstream_error",
+          message: "Amae-Koromo request failed"
+        }
+      })
+    });
+  });
+
+  await page.getByLabel("Mahjong Soul 닉네임").fill("Tester");
+  await page.getByLabel("동일 닉네임 번호").selectOption("0");
+  await page.getByRole("button", { name: "그래프 생성" }).click();
+
+  await expect(page.getByRole("alert")).toHaveText("닉네임 검색에 실패했습니다.");
+  await expect(page.getByText("Amae-Koromo request failed")).toHaveCount(0);
+});
+
+test("shows Korean timeline error when records cannot be analyzed", async ({ page }) => {
+  await page.route("**/api/search-player**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        players: [{ id: 1001, nickname: "Tester", latestTimestamp: 1700000500 }]
+      })
+    });
+  });
+
+  await page.route("**/api/player-records**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        records: [
+          {
+            modeId: 999,
+            startTime: 1700000000,
+            endTime: 1700000200,
+            players: [
+              { accountId: 1001, score: 45000, level: 10301, gradingScore: 45 },
+              { accountId: 2002, score: 30000, level: 10301, gradingScore: 15 }
+            ]
+          }
+        ]
+      })
+    });
+  });
+
+  await page.getByLabel("Mahjong Soul 닉네임").fill("Tester");
+  await page.getByLabel("동일 닉네임 번호").selectOption("0");
+  await page.getByRole("button", { name: "그래프 생성" }).click();
+
+  await expect(page.getByRole("alert")).toHaveText("패보를 분석할 수 없습니다. 대국 기록을 확인해 주세요.");
+  await expect(page.getByText("Unsupported game mode")).toHaveCount(0);
+});

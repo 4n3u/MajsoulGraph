@@ -21,16 +21,10 @@ type SearchPlayerResult = {
 
 type SearchResponse = {
   players?: SearchPlayerResult[];
-  error?: {
-    message?: string;
-  };
 };
 
 type RecordsResponse = {
   records?: GameRecord[];
-  error?: {
-    message?: string;
-  };
 };
 
 const modeConfig: Record<ModeLabel, ModeConfig> = {
@@ -56,10 +50,7 @@ function formatDate(timestamp: number): string {
   }).format(new Date(timestamp * 1000));
 }
 
-async function parseJsonResponse<T extends { error?: { message?: string } }>(
-  response: Response,
-  fallbackMessage: string
-): Promise<T> {
+async function parseJsonResponse<T>(response: Response, fallbackMessage: string): Promise<T> {
   let body: T | null = null;
 
   try {
@@ -69,7 +60,7 @@ async function parseJsonResponse<T extends { error?: { message?: string } }>(
   }
 
   if (!response.ok) {
-    throw new Error(body?.error?.message ?? fallbackMessage);
+    throw new Error(fallbackMessage);
   }
 
   if (!body) {
@@ -159,12 +150,18 @@ export function PointTrendGraph() {
 
       setStatus("패보를 분석하는 중...");
       await nextFrame();
-      const nextTimeline = buildPointTimeline({
-        recordsDescending: recordsBody.records,
-        targetAccountId: player.id,
-        initialLevel: config.initialLevel,
-        historyLevel: config.historyLevel
-      });
+      let nextTimeline: ReturnType<typeof buildPointTimeline>;
+
+      try {
+        nextTimeline = buildPointTimeline({
+          recordsDescending: recordsBody.records,
+          targetAccountId: player.id,
+          initialLevel: config.initialLevel,
+          historyLevel: config.historyLevel
+        });
+      } catch {
+        throw new Error("패보를 분석할 수 없습니다. 대국 기록을 확인해 주세요.");
+      }
 
       setTimeline(nextTimeline);
       setStatus("");
