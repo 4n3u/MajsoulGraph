@@ -19,6 +19,10 @@ async function withServer<T>(
   }
 }
 
+async function readStyles() {
+  return (await readFile(path.resolve("client/src/styles.css"), "utf8")).replace(/\r\n/g, "\n");
+}
+
 describe("scaffold", () => {
   it("serves health status", async () => {
     await withServer(async (baseUrl) => {
@@ -57,7 +61,7 @@ describe("scaffold", () => {
   });
 
   it("keeps nested result areas unframed inside tool cards", async () => {
-    const css = await readFile(path.resolve("client/src/styles.css"), "utf8");
+    const css = await readStyles();
     const nestedResultSelectors = [
       ".result-panel",
       ".result-meta div",
@@ -83,7 +87,7 @@ describe("scaffold", () => {
   });
 
   it("uses a neutral default palette instead of the previous green theme", async () => {
-    const css = await readFile(path.resolve("client/src/styles.css"), "utf8");
+    const css = await readStyles();
     const removedGreenPalette = ["#244c31", "#45604c", "#bad2c1", "#eef6f0", "#67706b", "#56615a"];
 
     for (const color of removedGreenPalette) {
@@ -92,7 +96,7 @@ describe("scaffold", () => {
   });
 
   it("keeps Base UI controls styled after the documentation examples", async () => {
-    const css = await readFile(path.resolve("client/src/styles.css"), "utf8");
+    const css = await readStyles();
 
     expect(css).toContain("oklch(14.5% 0 0deg)");
     expect(css).toContain("outline-offset: -1px");
