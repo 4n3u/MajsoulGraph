@@ -44,6 +44,67 @@ function cx(...classNames: Array<string | false | null | undefined>) {
   return classNames.filter(Boolean).join(" ");
 }
 
+function CaretUpDownIcon(props: ComponentPropsWithoutRef<"svg">) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      {...props}
+      style={{ display: "block", ...props.style }}
+    >
+      <path d="M11 10H5l3 3.5zm0-4H5l3-3.5z" />
+    </svg>
+  );
+}
+
+function CaretUpIcon(props: ComponentPropsWithoutRef<"svg">) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      {...props}
+      style={{ display: "block", ...props.style }}
+    >
+      <path d="M12 10H4l4-4.5z" />
+    </svg>
+  );
+}
+
+function CaretDownIcon(props: ComponentPropsWithoutRef<"svg">) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      {...props}
+      style={{ display: "block", ...props.style }}
+    >
+      <path d="M12 6H4l4 4.5z" />
+    </svg>
+  );
+}
+
+function CheckIcon(props: ComponentPropsWithoutRef<"svg">) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      {...props}
+      style={{ display: "block", ...props.style }}
+    >
+      <path d="m2.5 8.5 4 4 7-9" />
+    </svg>
+  );
+}
+
 export function TextField({
   fieldClassName,
   inputClassName,
@@ -90,23 +151,31 @@ export function SelectField<Value extends string>({
       <div className={cx("base-field base-select-field", fieldClassName)}>
         <Select.Label className="base-field-label">{label}</Select.Label>
         <Select.Trigger aria-label={String(label)} className="base-select-trigger" disabled={disabled}>
-          <Select.Value placeholder="선택" />
-          <Select.Icon aria-hidden className="base-select-icon" />
+          <Select.Value className="base-select-value" placeholder="선택" />
+          <Select.Icon aria-hidden className="base-select-icon">
+            <CaretUpDownIcon />
+          </Select.Icon>
         </Select.Trigger>
       </div>
       <Select.Portal>
-        <Select.Positioner alignItemWithTrigger={false} sideOffset={6}>
+        <Select.Positioner className="base-select-positioner" sideOffset={4}>
           <Select.Popup className="base-select-popup">
+            <Select.ScrollUpArrow className="base-select-scroll-arrow">
+              <CaretUpIcon />
+            </Select.ScrollUpArrow>
             <Select.List className="base-select-list">
               {options.map((option) => (
                 <Select.Item className="base-select-item" key={option.value} value={option.value}>
-                  <Select.ItemText>{option.label}</Select.ItemText>
                   <Select.ItemIndicator aria-hidden className="base-select-item-indicator">
-                    <span className="base-select-check-mark" />
+                    <CheckIcon />
                   </Select.ItemIndicator>
+                  <Select.ItemText className="base-select-item-text">{option.label}</Select.ItemText>
                 </Select.Item>
               ))}
             </Select.List>
+            <Select.ScrollDownArrow className="base-select-scroll-arrow">
+              <CaretDownIcon />
+            </Select.ScrollDownArrow>
           </Select.Popup>
         </Select.Positioner>
       </Select.Portal>
@@ -131,7 +200,7 @@ export function CheckboxField({
         onCheckedChange={(nextChecked) => onCheckedChange(nextChecked)}
       >
         <Checkbox.Indicator aria-hidden className="base-checkbox-indicator">
-          <span className="base-checkbox-check-mark" />
+          <CheckIcon />
         </Checkbox.Indicator>
       </Checkbox.Root>
       <span>{label}</span>

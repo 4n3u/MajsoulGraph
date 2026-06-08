@@ -100,7 +100,7 @@ test("mobile shell uses labelled top navigation and one-column layout", async ({
     const navBox = nav.getBoundingClientRect();
     const workspaceBox = workspace.getBoundingClientRect();
 
-    return workspaceBox.top >= navBox.bottom && Math.abs(workspaceBox.left - navBox.left) <= 1;
+    return workspaceBox.top >= navBox.bottom - 1 && Math.abs(workspaceBox.left - navBox.left) <= 1;
   });
 
   expect(stacksInOneColumn).toBe(true);

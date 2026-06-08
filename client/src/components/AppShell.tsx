@@ -5,7 +5,6 @@ import { PaipuConverter } from "../features/PaipuConverter";
 import { PointTrendGraph } from "../features/PointTrendGraph";
 import { StyleAnalysis } from "../features/StyleAnalysis";
 import { ToolPlaceholder } from "./ToolPlaceholder";
-import { useMediaQuery } from "./useMediaQuery";
 
 type ToolId = "points" | "style" | "hand" | "paipu";
 
@@ -54,26 +53,24 @@ function renderTool(tool: (typeof tools)[number]) {
 
 export function AppShell() {
   const [selectedTool, setSelectedTool] = useState<ToolId>("points");
-  const isMobile = useMediaQuery("(max-width: 768px)");
 
   return (
     <Tabs.Root
       className="app-shell"
       value={selectedTool}
       onValueChange={(value) => setSelectedTool(value as ToolId)}
-      orientation={isMobile ? "horizontal" : "vertical"}
     >
       <div className="app-layout">
-        <aside className="tool-nav" aria-label="도구">
-          <div className="nav-heading">도구 선택</div>
+        <nav className="tool-nav" aria-label="도구">
           <Tabs.List className="tool-tabs" aria-label="도구 선택">
             {tools.map((tool) => (
               <Tabs.Tab className="tool-tab" key={tool.id} value={tool.id}>
                 {tool.label}
               </Tabs.Tab>
             ))}
+            <Tabs.Indicator className="tool-tab-indicator" />
           </Tabs.List>
-        </aside>
+        </nav>
 
         <main className="workspace">
           {tools.map((tool) => (
