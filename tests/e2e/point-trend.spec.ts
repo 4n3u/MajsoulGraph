@@ -74,7 +74,31 @@ test("generates point trend chart from mocked player records", async ({ page }) 
 
   await expect(page.getByText("패보를 분석하는 중...")).toBeVisible();
   const result = page.getByLabel("포인트 추이 결과");
-  await expect(result.getByRole("img", { name: "포인트 추이 그래프" })).toBeVisible();
+  const chart = result.getByRole("img", { name: "포인트 추이 그래프" });
+  await expect(chart).toBeVisible();
+  const chartCanvas = chart.locator("canvas").first();
+  await expect(chartCanvas).toBeAttached();
+  await expect
+    .poll(async () => {
+      return chartCanvas.evaluate((element) => {
+        const canvas = element as HTMLCanvasElement;
+        const context = canvas.getContext("2d");
+
+        if (!context || canvas.width <= 0 || canvas.height <= 0) {
+          return false;
+        }
+
+        const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+        for (let index = 3; index < pixels.length; index += 4) {
+          if ((pixels[index] ?? 0) > 0) {
+            return canvas.clientWidth > 0 && canvas.clientHeight > 0;
+          }
+        }
+
+        return false;
+      });
+    })
+    .toBe(true);
   await expect(result.getByText("대국 수")).toBeVisible();
   await expect(result.getByText("2", { exact: true })).toBeVisible();
   await expect(result.getByText("현재 pt")).toBeVisible();
@@ -130,6 +154,47 @@ test("shows Korean search error when the request is rejected", async ({ page }) 
 
   await expect(page.getByRole("alert")).toHaveText("닉네임 검색에 실패했습니다.");
   await expect(page.getByText("Failed to fetch")).toHaveCount(0);
+});
+
+test("locks point form while a request is in flight", async ({ page }) => {
+  let releaseSearch!: () => void;
+  let resolveSearchRequested!: () => void;
+  const searchRequested = new Promise<void>((resolve) => {
+    resolveSearchRequested = resolve;
+  });
+
+  await page.route("**/api/search-player**", async (route) => {
+    resolveSearchRequested();
+    await new Promise<void>((release) => {
+      releaseSearch = release;
+    });
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        players: [{ id: 1001, nickname: "Tester", latestTimestamp: 1700000500 }]
+      })
+    });
+  });
+  await page.route("**/api/player-records**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ records: [] })
+    });
+  });
+
+  await page.getByLabel("Mahjong Soul 닉네임").fill("Tester");
+  await page.getByLabel("동일 닉네임 번호").selectOption("0");
+  await page.getByRole("button", { name: "그래프 생성" }).click();
+  await searchRequested;
+
+  await expect(page.getByLabel("Mahjong Soul 닉네임")).toBeDisabled();
+  await expect(page.getByLabel("모드")).toBeDisabled();
+  await expect(page.getByLabel("동일 닉네임 번호")).toBeDisabled();
+  await expect(page.getByRole("button", { name: "그래프 생성" })).toBeDisabled();
+
+  releaseSearch();
 });
 
 test("shows Korean timeline error when records cannot be analyzed", async ({ page }) => {

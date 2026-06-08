@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { buildPointTimeline, type GameRecord } from "@shared/pointTimeline";
 import { EChart } from "../charts/EChart";
 import { buildPointChartOptions } from "../charts/pointChartOptions";
@@ -70,9 +70,9 @@ async function parseJsonResponse<T>(response: Response, fallbackMessage: string)
   return body;
 }
 
-async function fetchOrThrow(url: string, fallbackMessage: string): Promise<Response> {
+async function fetchOrThrow(url: string, fallbackMessage: string, signal: AbortSignal): Promise<Response> {
   try {
-    return await fetch(url);
+    return await fetch(url, { signal });
   } catch {
     throw new Error(fallbackMessage);
   }
@@ -93,6 +93,16 @@ export function PointTrendGraph() {
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [timeline, setTimeline] = useState<ReturnType<typeof buildPointTimeline> | null>(null);
+  const requestIdRef = useRef(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isLoading = Boolean(status);
+
+  useEffect(() => {
+    return () => {
+      requestIdRef.current += 1;
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   const chartOptions = useMemo(() => {
     return timeline ? buildPointChartOptions(timeline.points) : null;
@@ -119,6 +129,13 @@ export function PointTrendGraph() {
 
     const config = modeConfig[mode];
     const sameNameIndex = Number(sameName);
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    abortControllerRef.current?.abort();
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    const isCurrentRequest = () => requestIdRef.current === requestId && !abortController.signal.aborted;
 
     try {
       setStatus("닉네임 검색 중...");
@@ -127,9 +144,16 @@ export function PointTrendGraph() {
         nickname: trimmedNickname
       });
       const searchBody = await parseJsonResponse<SearchResponse>(
-        await fetchOrThrow(`/api/search-player?${searchParams.toString()}`, "닉네임 검색에 실패했습니다."),
+        await fetchOrThrow(
+          `/api/search-player?${searchParams.toString()}`,
+          "닉네임 검색에 실패했습니다.",
+          abortController.signal
+        ),
         "닉네임 검색에 실패했습니다."
       );
+
+      if (!isCurrentRequest()) return;
+
       const player = searchBody.players?.[sameNameIndex];
 
       if (!player) {
@@ -140,7 +164,9 @@ export function PointTrendGraph() {
         throw new Error("최근 대국 시간이 없는 플레이어입니다.");
       }
 
-      setStatus("패보를 불러오는 중...");
+      if (isCurrentRequest()) {
+        setStatus("패보를 불러오는 중...");
+      }
       const recordsParams = new URLSearchParams({
         mode: config.apiMode,
         playerId: String(player.id),
@@ -148,16 +174,26 @@ export function PointTrendGraph() {
         gameModes: config.gameModes
       });
       const recordsBody = await parseJsonResponse<RecordsResponse>(
-        await fetchOrThrow(`/api/player-records?${recordsParams.toString()}`, "패보를 불러오지 못했습니다."),
+        await fetchOrThrow(
+          `/api/player-records?${recordsParams.toString()}`,
+          "패보를 불러오지 못했습니다.",
+          abortController.signal
+        ),
         "패보를 불러오지 못했습니다."
       );
+
+      if (!isCurrentRequest()) return;
 
       if (!recordsBody.records?.length) {
         throw new Error("분석할 대국 기록이 없습니다.");
       }
 
-      setStatus("패보를 분석하는 중...");
+      if (isCurrentRequest()) {
+        setStatus("패보를 분석하는 중...");
+      }
       await nextFrame();
+      if (!isCurrentRequest()) return;
+
       let nextTimeline: ReturnType<typeof buildPointTimeline>;
 
       try {
@@ -171,12 +207,22 @@ export function PointTrendGraph() {
         throw new Error("패보를 분석할 수 없습니다. 대국 기록을 확인해 주세요.");
       }
 
-      setTimeline(nextTimeline);
-      setStatus("");
+      if (isCurrentRequest()) {
+        setTimeline(nextTimeline);
+        setStatus("");
+        if (abortControllerRef.current === abortController) {
+          abortControllerRef.current = null;
+        }
+      }
     } catch (submitError) {
-      setTimeline(null);
-      setStatus("");
-      setError(submitError instanceof Error ? submitError.message : "포인트 추이 그래프를 생성할 수 없습니다.");
+      if (isCurrentRequest()) {
+        setTimeline(null);
+        setStatus("");
+        setError(submitError instanceof Error ? submitError.message : "포인트 추이 그래프를 생성할 수 없습니다.");
+        if (abortControllerRef.current === abortController) {
+          abortControllerRef.current = null;
+        }
+      }
     }
   }
 
@@ -199,6 +245,7 @@ export function PointTrendGraph() {
             value={nickname}
             onChange={(event) => setNickname(event.target.value)}
             placeholder="닉네임"
+            disabled={isLoading}
           />
           <label className="compact-field" htmlFor="point-mode-select">
             <span>모드</span>
@@ -207,6 +254,7 @@ export function PointTrendGraph() {
               name="mode"
               value={mode}
               onChange={(event) => setMode(event.target.value as ModeLabel)}
+              disabled={isLoading}
             >
               <option value="사마">사마</option>
               <option value="삼마">삼마</option>
@@ -219,6 +267,7 @@ export function PointTrendGraph() {
               name="same-name"
               value={sameName}
               onChange={(event) => setSameName(event.target.value as SameNameIndex)}
+              disabled={isLoading}
             >
               <option value="">선택</option>
               <option value="0">0</option>
@@ -226,7 +275,7 @@ export function PointTrendGraph() {
               <option value="2">2</option>
             </select>
           </label>
-          <button className="primary-button" type="submit" disabled={Boolean(status)}>
+          <button className="primary-button" type="submit" disabled={isLoading}>
             그래프 생성
           </button>
         </div>
