@@ -26,6 +26,7 @@ type PlayerRecord = {
 
 const cache = new Map<string, CacheEntry>();
 const cacheTtlMs = 60_000;
+const maxCacheEntries = 100;
 const requestTimeoutMs = 10_000;
 
 function apiBase(mode: Mode): string {
@@ -38,6 +39,23 @@ function requireText(value: unknown, name: string): string {
   }
 
   return value.trim();
+}
+
+function writeCache(url: string, value: unknown, now: number): void {
+  if (!cache.has(url) && cache.size >= maxCacheEntries) {
+    const oldestUrl = cache.keys().next().value as string | undefined;
+    if (oldestUrl) cache.delete(oldestUrl);
+  }
+
+  cache.set(url, { value, expiresAt: now + cacheTtlMs });
+}
+
+function isAbortError(error: unknown, signal: AbortSignal): boolean {
+  return signal.aborted || (error instanceof DOMException && error.name === "AbortError");
+}
+
+export function clearAmaeKoromoCache(): void {
+  cache.clear();
 }
 
 export async function cachedJson<T>(url: string): Promise<T> {
@@ -53,11 +71,14 @@ export async function cachedJson<T>(url: string): Promise<T> {
     if (!response.ok) throw new ApiError(502, "upstream_error", "Amae-Koromo request failed");
 
     const value = (await response.json()) as T;
-    cache.set(url, { value, expiresAt: now + cacheTtlMs });
+    writeCache(url, value, now);
     return value;
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new ApiError(504, "upstream_timeout", "Amae-Koromo request timed out");
+    if (isAbortError(error, controller.signal)) {
+      throw new ApiError(504, "upstream_timeout", "Amae-Koromo request timed out");
+    }
+    throw new ApiError(502, "upstream_error", "Amae-Koromo request failed");
   } finally {
     clearTimeout(timeout);
   }

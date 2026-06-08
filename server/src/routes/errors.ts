@@ -19,7 +19,12 @@ export function assertMode(value: unknown): "pl4" | "pl3" {
   throw new ApiError(400, "bad_input", "mode must be pl4 or pl3");
 }
 
-export const errorHandler: ErrorRequestHandler = (error, _request, response, _next) => {
+export const errorHandler: ErrorRequestHandler = (error, _request, response, next) => {
+  if (response.headersSent) {
+    next(error);
+    return;
+  }
+
   if (error instanceof ApiError) {
     response.status(error.status).json({ error: { code: error.code, message: error.message } });
     return;
