@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildPointTimeline, getRank, levelDan, levelPtBase } from "@shared/pointTimeline";
+import {
+  buildPointTimeline,
+  createPointTimelineProcessor,
+  getRank,
+  levelDan,
+  levelPtBase
+} from "@shared/pointTimeline";
 
 describe("rank labels and point bases", () => {
   it("ports rank label and point base behavior", () => {
@@ -78,5 +84,35 @@ describe("point timeline", () => {
         historyLevel: 10203
       })
     ).toThrow("Unsupported game mode");
+  });
+
+  it("can process records incrementally for progress updates", () => {
+    const games = [
+      {
+        modeId: 16,
+        startTime: 1000,
+        endTime: 2000,
+        players: [{ accountId: 1, score: 45000, level: 10301, gradingScore: 45 }]
+      },
+      {
+        modeId: 16,
+        startTime: 3000,
+        endTime: 4000,
+        players: [{ accountId: 1, score: 25000, level: 10301, gradingScore: 5 }]
+      }
+    ];
+    const input = {
+      recordsDescending: [...games].reverse(),
+      targetAccountId: 1,
+      initialLevel: 10301,
+      historyLevel: 10203
+    };
+    const processor = createPointTimelineProcessor(input);
+
+    expect(processor.current).toBe(0);
+    expect(processor.total).toBe(2);
+    expect(processor.processNext()).toEqual({ current: 1, total: 2 });
+    expect(processor.processNext()).toEqual({ current: 2, total: 2 });
+    expect(processor.finish()).toEqual(buildPointTimeline(input));
   });
 });

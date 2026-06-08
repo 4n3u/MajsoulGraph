@@ -1,5 +1,10 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { buildPointTimeline, type GameRecord } from "@shared/pointTimeline";
+import {
+  createPointTimelineProcessor,
+  type GameRecord,
+  type PointTimelineInput,
+  type TimelineResult
+} from "@shared/pointTimeline";
 import { EChart } from "../charts/EChart";
 import { buildPointChartOptions } from "../charts/pointChartOptions";
 import { Button, ProgressBar, SelectField, TextField } from "../components/BaseControls";
@@ -27,6 +32,11 @@ type SearchResponse = {
 
 type RecordsResponse = {
   records?: GameRecord[];
+};
+
+type LoadingProgress = {
+  label: string;
+  value: number | null;
 };
 
 const modeConfig: Record<ModeLabel, ModeConfig> = {
@@ -99,16 +109,69 @@ async function nextFrame(): Promise<void> {
   });
 }
 
+async function nextAnimationFrame(): Promise<void> {
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve());
+  });
+}
+
+function formatAnalysisLabel(current: number, total: number): string {
+  return `패보를 분석하는 중... (${current}/${total})`;
+}
+
+function progressValue(current: number, total: number): number {
+  if (total <= 0) return 100;
+  return Math.round((current / total) * 100);
+}
+
+async function buildPointTimelineWithProgress(
+  input: PointTimelineInput,
+  setProgress: (progress: LoadingProgress) => void,
+  isCurrentRequest: () => boolean
+): Promise<TimelineResult> {
+  const processor = createPointTimelineProcessor(input);
+  const batchSize = Math.max(1, Math.ceil(processor.total / 40));
+
+  setProgress({
+    label: formatAnalysisLabel(0, processor.total),
+    value: 0
+  });
+  await nextFrame();
+
+  if (!isCurrentRequest()) {
+    throw new DOMException("Point timeline analysis was cancelled.", "AbortError");
+  }
+
+  while (processor.current < processor.total) {
+    for (let index = 0; index < batchSize && processor.current < processor.total; index += 1) {
+      processor.processNext();
+    }
+
+    setProgress({
+      label: formatAnalysisLabel(processor.current, processor.total),
+      value: progressValue(processor.current, processor.total)
+    });
+
+    await nextAnimationFrame();
+
+    if (!isCurrentRequest()) {
+      throw new DOMException("Point timeline analysis was cancelled.", "AbortError");
+    }
+  }
+
+  return processor.finish();
+}
+
 export function PointTrendGraph() {
   const [nickname, setNickname] = useState("");
   const [mode, setMode] = useState<ModeLabel>("사마");
   const [sameName, setSameName] = useState<SameNameIndex>("0");
-  const [status, setStatus] = useState("");
-  const [timeline, setTimeline] = useState<ReturnType<typeof buildPointTimeline> | null>(null);
+  const [progress, setProgress] = useState<LoadingProgress | null>(null);
+  const [timeline, setTimeline] = useState<TimelineResult | null>(null);
   const requestIdRef = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
   const showError = useErrorToast();
-  const isLoading = Boolean(status);
+  const isLoading = Boolean(progress);
 
   useEffect(() => {
     return () => {
@@ -128,7 +191,7 @@ export function PointTrendGraph() {
     setTimeline(null);
 
     if (!trimmedNickname) {
-      setStatus("");
+      setProgress(null);
       showError("닉네임을 입력해주세요.");
       return;
     }
@@ -144,7 +207,7 @@ export function PointTrendGraph() {
     const isCurrentRequest = () => requestIdRef.current === requestId && !abortController.signal.aborted;
 
     try {
-      setStatus("loading");
+      setProgress({ label: "닉네임 검색 중", value: null });
       const searchParams = new URLSearchParams({
         mode: config.apiMode,
         nickname: trimmedNickname
@@ -171,7 +234,7 @@ export function PointTrendGraph() {
       }
 
       if (isCurrentRequest()) {
-        setStatus("loading");
+        setProgress({ label: "패보를 불러오는 중", value: null });
       }
       const recordsParams = new URLSearchParams({
         mode: config.apiMode,
@@ -195,27 +258,31 @@ export function PointTrendGraph() {
       }
 
       if (isCurrentRequest()) {
-        setStatus("loading");
+        setProgress({ label: "패보 분석 준비 중", value: null });
       }
       await nextFrame();
       if (!isCurrentRequest()) return;
 
-      let nextTimeline: ReturnType<typeof buildPointTimeline>;
+      let nextTimeline: TimelineResult;
 
       try {
-        nextTimeline = buildPointTimeline({
-          recordsDescending: recordsBody.records,
-          targetAccountId: player.id,
-          initialLevel: config.initialLevel,
-          historyLevel: config.historyLevel
-        });
+        nextTimeline = await buildPointTimelineWithProgress(
+          {
+            recordsDescending: recordsBody.records,
+            targetAccountId: player.id,
+            initialLevel: config.initialLevel,
+            historyLevel: config.historyLevel
+          },
+          setProgress,
+          isCurrentRequest
+        );
       } catch {
         throw new Error("패보를 분석할 수 없습니다. 대국 기록을 확인해 주세요.");
       }
 
       if (isCurrentRequest()) {
         setTimeline(nextTimeline);
-        setStatus("");
+        setProgress(null);
         if (abortControllerRef.current === abortController) {
           abortControllerRef.current = null;
         }
@@ -223,7 +290,7 @@ export function PointTrendGraph() {
     } catch (submitError) {
       if (isCurrentRequest()) {
         setTimeline(null);
-        setStatus("");
+        setProgress(null);
         showError(submitError instanceof Error ? submitError.message : "포인트 추이 그래프를 생성할 수 없습니다.");
         if (abortControllerRef.current === abortController) {
           abortControllerRef.current = null;
@@ -274,8 +341,8 @@ export function PointTrendGraph() {
         </div>
       </form>
 
-      {status ? (
-        <ProgressBar label="포인트 추이 그래프 생성 중" />
+      {progress ? (
+        <ProgressBar label={progress.label} value={progress.value} />
       ) : null}
 
       {timeline && chartOptions ? (

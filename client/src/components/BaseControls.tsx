@@ -43,6 +43,8 @@ type CheckboxFieldProps = {
 
 type ProgressBarProps = {
   label: string;
+  max?: number;
+  value?: number | null;
 };
 
 function cx(...classNames: Array<string | false | null | undefined>) {
@@ -213,12 +215,15 @@ export function CheckboxField({
   );
 }
 
-export function ProgressBar({ label }: ProgressBarProps) {
+export function ProgressBar({ label, max = 100, value = null }: ProgressBarProps) {
   return (
-    <Progress.Root aria-valuetext={label} className="base-progress" value={null}>
+    <Progress.Root aria-valuetext={label} className="base-progress" max={max} value={value}>
       <Progress.Label className="base-progress-label">{label}</Progress.Label>
       <Progress.Track className="base-progress-track">
-        <Progress.Indicator className="base-progress-indicator" />
+        <Progress.Indicator
+          className="base-progress-indicator"
+          key={value === null ? "indeterminate" : "determinate"}
+        />
       </Progress.Track>
     </Progress.Root>
   );

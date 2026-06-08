@@ -78,10 +78,7 @@ test("generates point trend chart from mocked player records", async ({ page }) 
   await page.getByLabel("작혼 닉네임").fill("Tester");
   await page.getByRole("button", { name: "그래프 생성" }).click();
 
-  await expect(
-    page.getByRole("progressbar", { name: "포인트 추이 그래프 생성 중" })
-  ).toBeVisible();
-  await expect(page.getByText("패보를 분석하는 중...")).toHaveCount(0);
+  await expect(page.getByRole("progressbar")).toBeVisible();
   const result = page.getByLabel("포인트 추이 결과");
   const chart = result.getByRole("img", { name: "포인트 추이 그래프" });
   await expect(chart).toBeVisible();
@@ -128,6 +125,44 @@ test("generates point trend chart from mocked player records", async ({ page }) 
   expect(requestedUrls[1]).toContain("playerId=1001");
   expect(requestedUrls[1]).toContain("startTime=1700000500");
   expect(requestedUrls[1]).toContain("gameModes=16%2C15%2C12%2C11%2C9%2C8");
+});
+
+test("shows determinate progress while analyzing point records", async ({ page }) => {
+  const records = Array.from({ length: 80 }, (_, index) => ({
+    modeId: 16,
+    startTime: 1700000000 + (80 - index) * 100,
+    endTime: 1700000040 + (80 - index) * 100,
+    players: [
+      { accountId: 1001, score: 45000 - (index % 4) * 5000, level: 10301, gradingScore: 5 },
+      { accountId: 2002, score: 30000, level: 10301, gradingScore: 15 },
+      { accountId: 3003, score: 20000, level: 10301, gradingScore: -15 },
+      { accountId: 4004, score: 10000, level: 10301, gradingScore: -35 }
+    ]
+  }));
+
+  await page.route("**/api/search-player**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        players: [{ id: 1001, nickname: "Tester", latestTimestamp: 1700008000 }]
+      })
+    });
+  });
+
+  await page.route("**/api/player-records**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ records })
+    });
+  });
+
+  await page.getByLabel("작혼 닉네임").fill("Tester");
+  await page.getByRole("button", { name: "그래프 생성" }).click();
+
+  await expect(page.getByText(/패보를 분석하는 중\.\.\. \(\d+\/80\)/)).toBeVisible();
+  await expect(page.getByRole("progressbar")).toHaveAttribute("aria-valuenow", /^\d+$/);
 });
 
 test("shows Korean search error when API returns an English backend message", async ({ page }) => {

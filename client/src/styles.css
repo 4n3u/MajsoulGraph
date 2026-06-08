@@ -495,20 +495,15 @@ h1 {
   margin-top: 16px;
   max-width: 100%;
   row-gap: 0.5rem;
-  width: 15rem;
+  width: min(100%, 22.5rem);
 }
 
 .base-progress-label {
-  border: 0;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  padding: 0;
-  position: absolute;
-  white-space: nowrap;
-  width: 1px;
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  overflow-wrap: anywhere;
 }
 
 .base-progress-track {
@@ -522,6 +517,11 @@ h1 {
   background-color: oklch(14.5% 0 0deg);
   height: 100%;
   transition: width 500ms;
+}
+
+.base-progress-indicator[data-progressing],
+.base-progress-indicator[data-complete] {
+  transition: none;
 }
 
 .base-progress-indicator[data-indeterminate] {

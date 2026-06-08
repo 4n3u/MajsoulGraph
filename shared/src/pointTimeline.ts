@@ -55,6 +55,24 @@ type PointTimelineGameRecord = Omit<GameRecord, "modeId"> & {
   modeId: GameModeId | number;
 };
 
+export type PointTimelineInput = {
+  recordsDescending: PointTimelineGameRecord[];
+  targetAccountId: number;
+  initialLevel: number;
+  historyLevel: number;
+};
+
+type PointTimelineProcessorState = {
+  chronological: PointTimelineGameRecord[];
+  currentPoint: number;
+  historyPoint: number;
+  historyPreviousLevel: number;
+  nextIndex: number;
+  points: TimelinePoint[];
+  previousLevel: number;
+  rankHistory: RankHistoryEntry[];
+};
+
 const danNames = ["사", "걸", "호", "성", "천", "천"] as const;
 const ptBase: Record<number, number> = { 301: 6, 302: 7, 303: 10, 401: 14, 402: 16, 403: 18, 501: 20, 502: 30, 503: 45 };
 const supportedModeIds = new Set<number>([8, 9, 11, 12, 15, 16, 21, 22, 23, 24, 25, 26]);
@@ -100,94 +118,131 @@ export function getRank(players: PlayerRecord[], targetAccountId: number): numbe
   return rankIndex + 1;
 }
 
-export function buildPointTimeline(input: {
-  recordsDescending: PointTimelineGameRecord[];
-  targetAccountId: number;
-  initialLevel: number;
-  historyLevel: number;
-}): TimelineResult {
-  let previousLevel = input.initialLevel;
-  let currentPoint = 600;
-  let historyPreviousLevel = input.historyLevel;
-  let historyPoint = 600;
-
+function createProcessorState(input: PointTimelineInput): PointTimelineProcessorState {
   const chronological = [...input.recordsDescending].reverse();
   const initialModeId = chronological[0] === undefined ? 16 : assertGameModeId(chronological[0].modeId);
-  const points: TimelinePoint[] = [
-    {
-      index: 0,
-      point: currentPoint,
-      level: previousLevel,
-      rank: 0,
-      modeId: initialModeId,
-      startTime: 0,
-      endTime: 0
-    }
-  ];
-  const rankHistory: RankHistoryEntry[] = [];
-
-  for (let index = 0; index < chronological.length; index += 1) {
-    const game = chronological[index]!;
-    const player = game.players.find((item) => item.accountId === input.targetAccountId);
-    if (!player) continue;
-
-    const modeId = assertGameModeId(game.modeId);
-    const rank = getRank(game.players, input.targetAccountId);
-
-    if (previousLevel !== player.level) {
-      currentPoint = levelPtBase(player.level);
-    }
-
-    currentPoint = applyGradingScore(player.level, currentPoint, player.gradingScore);
-
-    points.push({
-      index: index + 1,
-      point: currentPoint,
-      level: player.level,
-      rank,
-      modeId,
-      startTime: game.startTime,
-      endTime: game.endTime
-    });
-
-    if (historyPreviousLevel !== player.level) {
-      historyPoint = levelPtBase(player.level);
-    }
-
-    const pointBefore = historyPoint;
-    historyPoint = applyGradingScore(player.level, historyPoint, player.gradingScore);
-
-    rankHistory.push({
-      index: index + 1,
-      fromLevel: historyPreviousLevel,
-      toLevel: player.level,
-      fromLevelLabel: levelDan(historyPreviousLevel),
-      toLevelLabel: levelDan(player.level),
-      rank,
-      pointBefore,
-      pointAfter: historyPoint,
-      modeId,
-      startTime: game.startTime,
-      endTime: game.endTime
-    });
-
-    previousLevel = player.level;
-    historyPreviousLevel = player.level;
-  }
-
-  const pointValues = points.map((point) => point.point);
-  const highestLevel = Math.max(...points.map((point) => point.level));
 
   return {
-    points,
-    rankHistory,
+    chronological,
+    currentPoint: 600,
+    historyPoint: 600,
+    historyPreviousLevel: input.historyLevel,
+    nextIndex: 0,
+    points: [
+      {
+        index: 0,
+        point: 600,
+        level: input.initialLevel,
+        rank: 0,
+        modeId: initialModeId,
+        startTime: 0,
+        endTime: 0
+      }
+    ],
+    previousLevel: input.initialLevel,
+    rankHistory: []
+  };
+}
+
+function processTimelineRecord(state: PointTimelineProcessorState, input: PointTimelineInput): void {
+  const game = state.chronological[state.nextIndex];
+  if (!game) return;
+
+  const index = state.nextIndex;
+  state.nextIndex += 1;
+
+  const player = game.players.find((item) => item.accountId === input.targetAccountId);
+  if (!player) return;
+
+  const modeId = assertGameModeId(game.modeId);
+  const rank = getRank(game.players, input.targetAccountId);
+
+  if (state.previousLevel !== player.level) {
+    state.currentPoint = levelPtBase(player.level);
+  }
+
+  state.currentPoint = applyGradingScore(player.level, state.currentPoint, player.gradingScore);
+
+  state.points.push({
+    index: index + 1,
+    point: state.currentPoint,
+    level: player.level,
+    rank,
+    modeId,
+    startTime: game.startTime,
+    endTime: game.endTime
+  });
+
+  if (state.historyPreviousLevel !== player.level) {
+    state.historyPoint = levelPtBase(player.level);
+  }
+
+  const pointBefore = state.historyPoint;
+  state.historyPoint = applyGradingScore(player.level, state.historyPoint, player.gradingScore);
+
+  state.rankHistory.push({
+    index: index + 1,
+    fromLevel: state.historyPreviousLevel,
+    toLevel: player.level,
+    fromLevelLabel: levelDan(state.historyPreviousLevel),
+    toLevelLabel: levelDan(player.level),
+    rank,
+    pointBefore,
+    pointAfter: state.historyPoint,
+    modeId,
+    startTime: game.startTime,
+    endTime: game.endTime
+  });
+
+  state.previousLevel = player.level;
+  state.historyPreviousLevel = player.level;
+}
+
+function finalizeTimeline(state: PointTimelineProcessorState): TimelineResult {
+  const pointValues = state.points.map((point) => point.point);
+  const highestLevel = Math.max(...state.points.map((point) => point.level));
+
+  return {
+    points: state.points,
+    rankHistory: state.rankHistory,
     summary: {
-      gameCount: Math.max(points.length - 1, 0),
+      gameCount: Math.max(state.points.length - 1, 0),
       lowPoint: Math.min(...pointValues),
       highPoint: Math.max(...pointValues),
-      finalPoint: points.at(-1)?.point ?? 600,
+      finalPoint: state.points.at(-1)?.point ?? 600,
       highestLevel,
       highestLevelLabel: levelDan(highestLevel)
     }
   };
+}
+
+export function createPointTimelineProcessor(input: PointTimelineInput) {
+  const state = createProcessorState(input);
+
+  return {
+    get current() {
+      return state.nextIndex;
+    },
+    get total() {
+      return state.chronological.length;
+    },
+    processNext() {
+      processTimelineRecord(state, input);
+      return {
+        current: state.nextIndex,
+        total: state.chronological.length
+      };
+    },
+    finish(): TimelineResult {
+      while (state.nextIndex < state.chronological.length) {
+        processTimelineRecord(state, input);
+      }
+
+      return finalizeTimeline(state);
+    }
+  };
+}
+
+export function buildPointTimeline(input: PointTimelineInput): TimelineResult {
+  return createPointTimelineProcessor(input).finish();
 }
