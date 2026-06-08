@@ -98,9 +98,11 @@ describe("scaffold", () => {
     expect(css).toContain("outline-offset: -1px");
     expect(css).toContain("box-shadow: 0.25rem 0.25rem 0 rgb(0 0 0 / 12%)");
     expect(css).toContain("translate: var(--active-tab-left)");
+    expect(css).toContain("scrollbar-width: none");
 
     expect(css).toMatch(/\.base-input,\s*\.base-select-trigger,\s*\.result-url\s*{[\s\S]*border-radius: 0/);
     expect(css).toMatch(/\.primary-button,\s*\.secondary-button\s*{[\s\S]*border-radius: 0/);
     expect(css).toMatch(/\.tool-tab-indicator\s*{[\s\S]*border-top: 1px solid oklch\(14\.5% 0 0deg\)/);
+    expect(css).toMatch(/\.tool-nav::\-webkit-scrollbar\s*{[\s\S]*display: none/);
   });
 });

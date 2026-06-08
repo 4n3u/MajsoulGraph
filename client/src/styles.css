@@ -55,7 +55,12 @@ h1 {
   align-self: start;
   min-width: 0;
   overflow-x: auto;
-  scrollbar-width: thin;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.tool-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .tool-tabs {
