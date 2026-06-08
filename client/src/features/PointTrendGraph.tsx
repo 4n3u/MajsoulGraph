@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { buildPointTimeline, type GameRecord } from "@shared/pointTimeline";
 import { EChart } from "../charts/EChart";
 import { buildPointChartOptions } from "../charts/pointChartOptions";
-import { Button, SelectField, TextField } from "../components/BaseControls";
+import { Button, ProgressBar, SelectField, TextField } from "../components/BaseControls";
 
 type ModeLabel = "사마" | "삼마";
 type SameNameIndex = "0" | "1" | "2";
@@ -144,7 +144,7 @@ export function PointTrendGraph() {
     const isCurrentRequest = () => requestIdRef.current === requestId && !abortController.signal.aborted;
 
     try {
-      setStatus("닉네임 검색 중...");
+      setStatus("loading");
       const searchParams = new URLSearchParams({
         mode: config.apiMode,
         nickname: trimmedNickname
@@ -171,7 +171,7 @@ export function PointTrendGraph() {
       }
 
       if (isCurrentRequest()) {
-        setStatus("패보를 불러오는 중...");
+        setStatus("loading");
       }
       const recordsParams = new URLSearchParams({
         mode: config.apiMode,
@@ -195,7 +195,7 @@ export function PointTrendGraph() {
       }
 
       if (isCurrentRequest()) {
-        setStatus("패보를 분석하는 중...");
+        setStatus("loading");
       }
       await nextFrame();
       if (!isCurrentRequest()) return;
@@ -275,9 +275,7 @@ export function PointTrendGraph() {
       </form>
 
       {status ? (
-        <p className="loading-status" role="status">
-          {status}
-        </p>
+        <ProgressBar label="포인트 추이 그래프 생성 중" />
       ) : null}
 
       {error ? (

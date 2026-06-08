@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { ProcessedStyleStats, StyleIntensity, StyleLabel } from "@shared/styleAnalysis";
 import { EChart } from "../charts/EChart";
 import { buildStyleChartOptions } from "../charts/styleChartOptions";
-import { Button, SelectField, TextField } from "../components/BaseControls";
+import { Button, ProgressBar, SelectField, TextField } from "../components/BaseControls";
 
 type SameNameIndex = "0" | "1" | "2";
 
@@ -134,7 +134,7 @@ export function StyleAnalysis() {
     const isCurrentRequest = () => requestIdRef.current === requestId && !abortController.signal.aborted;
 
     try {
-      setStatus("분석 중...");
+      setStatus("loading");
       const params = new URLSearchParams({
         nickname: trimmedNickname,
         sameName
@@ -207,15 +207,13 @@ export function StyleAnalysis() {
             value={sameName}
           />
           <Button className="primary-button" type="submit" disabled={isLoading}>
-            {isLoading ? "분석 중..." : "스타일 분석"}
+            스타일 분석
           </Button>
         </div>
       </form>
 
       {status ? (
-        <p className="loading-status" role="status">
-          {status}
-        </p>
+        <ProgressBar label="스타일 분석 진행 중" />
       ) : null}
 
       {error ? (

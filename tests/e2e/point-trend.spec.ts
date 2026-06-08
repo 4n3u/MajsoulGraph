@@ -71,7 +71,10 @@ test("generates point trend chart from mocked player records", async ({ page }) 
   await page.getByLabel("작혼 닉네임").fill("Tester");
   await page.getByRole("button", { name: "그래프 생성" }).click();
 
-  await expect(page.getByText("패보를 분석하는 중...")).toBeVisible();
+  await expect(
+    page.getByRole("progressbar", { name: "포인트 추이 그래프 생성 중" })
+  ).toBeVisible();
+  await expect(page.getByText("패보를 분석하는 중...")).toHaveCount(0);
   const result = page.getByLabel("포인트 추이 결과");
   const chart = result.getByRole("img", { name: "포인트 추이 그래프" });
   await expect(chart).toBeVisible();

@@ -3,6 +3,7 @@ import { Button } from "@base-ui/react/button";
 import { Checkbox } from "@base-ui/react/checkbox";
 import { Field } from "@base-ui/react/field";
 import { Input } from "@base-ui/react/input";
+import { Progress } from "@base-ui/react/progress";
 import { Select } from "@base-ui/react/select";
 
 type TextFieldProps = Omit<
@@ -38,6 +39,10 @@ type CheckboxFieldProps = {
   label: ReactNode;
   name?: string;
   onCheckedChange: (checked: boolean) => void;
+};
+
+type ProgressBarProps = {
+  label: string;
 };
 
 function cx(...classNames: Array<string | false | null | undefined>) {
@@ -205,6 +210,17 @@ export function CheckboxField({
       </Checkbox.Root>
       <span>{label}</span>
     </label>
+  );
+}
+
+export function ProgressBar({ label }: ProgressBarProps) {
+  return (
+    <Progress.Root aria-valuetext={label} className="base-progress" value={null}>
+      <Progress.Label className="base-progress-label">{label}</Progress.Label>
+      <Progress.Track className="base-progress-track">
+        <Progress.Indicator className="base-progress-indicator" />
+      </Progress.Track>
+    </Progress.Root>
   );
 }
 

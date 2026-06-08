@@ -99,10 +99,13 @@ describe("scaffold", () => {
     expect(css).toContain("box-shadow: 0.25rem 0.25rem 0 rgb(0 0 0 / 12%)");
     expect(css).toContain("translate: var(--active-tab-left)");
     expect(css).toContain("scrollbar-width: none");
+    expect(css).toContain("height: 0.25rem");
+    expect(css).toContain("transition: width 500ms");
 
     expect(css).toMatch(/\.base-input,\s*\.base-select-trigger,\s*\.result-url\s*{[\s\S]*border-radius: 0/);
     expect(css).toMatch(/\.primary-button,\s*\.secondary-button\s*{[\s\S]*border-radius: 0/);
     expect(css).toMatch(/\.tool-tab-indicator\s*{[\s\S]*border-top: 1px solid oklch\(14\.5% 0 0deg\)/);
     expect(css).toMatch(/\.tool-nav::\-webkit-scrollbar\s*{[\s\S]*display: none/);
+    expect(css).toMatch(/\.base-progress-track\s*{[\s\S]*background-color: oklch\(92\.2% 0 0deg\)/);
   });
 });

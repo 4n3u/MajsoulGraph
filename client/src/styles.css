@@ -500,15 +500,60 @@ h1 {
   padding: 12px 14px;
 }
 
-.loading-status {
-  background: var(--surface-muted);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text);
-  font-weight: 700;
-  line-height: 1.5;
-  margin: 16px 0 0;
-  padding: 12px 14px;
+.base-progress {
+  display: grid;
+  grid-template-columns: 1fr;
+  margin-top: 16px;
+  max-width: 100%;
+  row-gap: 0.5rem;
+  width: 15rem;
+}
+
+.base-progress-label {
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.base-progress-track {
+  background-color: oklch(92.2% 0 0deg);
+  grid-column: 1;
+  height: 0.25rem;
+  overflow: hidden;
+}
+
+.base-progress-indicator {
+  background-color: oklch(14.5% 0 0deg);
+  height: 100%;
+  transition: width 500ms;
+}
+
+.base-progress-indicator[data-indeterminate] {
+  animation: base-progress-indeterminate 1200ms ease-in-out infinite;
+  width: 40%;
+}
+
+@keyframes base-progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .base-progress-indicator[data-indeterminate] {
+    animation-duration: 2400ms;
+  }
 }
 
 .result-panel {
