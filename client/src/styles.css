@@ -333,6 +333,58 @@ h1 {
   margin: 10px 0 0;
 }
 
+.hand-generator-form {
+  display: grid;
+  gap: 10px;
+}
+
+.checkbox-field {
+  align-items: center;
+  color: #26302a;
+  display: inline-flex;
+  font-weight: 700;
+  gap: 8px;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.checkbox-field input {
+  accent-color: #244c31;
+  height: 18px;
+  margin: 0;
+  width: 18px;
+}
+
+.checkbox-field:focus-within {
+  outline: 3px solid #d6a943;
+  outline-offset: 3px;
+}
+
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.hand-preview-panel {
+  background: #f8faf8;
+  border: 1px solid #d9ddd7;
+  border-radius: 8px;
+  margin-top: 18px;
+  overflow: auto;
+  padding: 18px;
+}
+
+.hand-preview-panel[hidden] {
+  display: none;
+}
+
+.hand-preview-panel canvas {
+  display: block;
+  height: auto;
+  image-rendering: auto;
+  max-width: 100%;
+}
+
 @media (max-width: 768px) {
   .app-shell {
     padding: 18px;
@@ -391,5 +443,9 @@ h1 {
   .result-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .hand-preview-panel {
+    padding: 14px;
   }
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Tabs } from "@base-ui/react/tabs";
+import { HandImageGenerator } from "../features/HandImageGenerator";
 import { PaipuConverter } from "../features/PaipuConverter";
 import { ToolPlaceholder } from "./ToolPlaceholder";
 import { useMediaQuery } from "./useMediaQuery";
@@ -30,6 +31,10 @@ const tools: Array<{ id: ToolId; label: string; note: string }> = [
 ];
 
 function renderTool(tool: (typeof tools)[number]) {
+  if (tool.id === "hand") {
+    return <HandImageGenerator />;
+  }
+
   if (tool.id === "paipu") {
     return <PaipuConverter />;
   }
