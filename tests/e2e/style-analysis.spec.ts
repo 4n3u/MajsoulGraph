@@ -13,6 +13,25 @@ test("empty submit shows a Korean validation error", async ({ page }) => {
   await expect(page.getByRole("alert")).toHaveText("닉네임을 입력해주세요.");
 });
 
+test("invalid count shows a Korean validation error without calling the API", async ({ page }) => {
+  let apiCalled = false;
+  await page.route("**/api/player-style**", async (route) => {
+    apiCalled = true;
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ error: { code: "unexpected", message: "unexpected request" } })
+    });
+  });
+
+  await page.getByLabel("Mahjong Soul 닉네임").fill("Tester");
+  await page.getByLabel("대국 수").fill("0");
+  await page.getByRole("button", { name: "분석하기" }).click();
+
+  await expect(page.getByRole("alert")).toHaveText("대국 수는 양의 정수로 입력해주세요.");
+  expect(apiCalled).toBe(false);
+});
+
 test("renders style analysis result from mocked API response", async ({ page }) => {
   const requestedUrls: string[] = [];
 

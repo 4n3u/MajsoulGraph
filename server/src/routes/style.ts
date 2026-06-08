@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { analyzeStyle, calculateCoordinates, getStandardizedStats, processStats } from "@shared/styleAnalysis";
 import { ApiError } from "./errors";
-import { fetchPlayerExtendedStats, fetchPlayerRecords, searchPlayer } from "../services/amaeKoromo";
+import { fetchPlayerExtendedStats, fetchPlayerRecordsPage, searchPlayer } from "../services/amaeKoromo";
 
 export const styleRouter = Router();
 
@@ -14,7 +14,12 @@ function parseSameName(value: unknown): number {
     throw new ApiError(400, "bad_input", "sameName must be a non-negative integer");
   }
 
-  return Number(value);
+  const sameName = Number(value);
+  if (!Number.isSafeInteger(sameName)) {
+    throw new ApiError(400, "bad_input", "sameName must be a safe non-negative integer");
+  }
+
+  return sameName;
 }
 
 function parseCount(value: unknown): number | undefined {
@@ -29,6 +34,38 @@ function parseCount(value: unknown): number | undefined {
   }
 
   return count;
+}
+
+function isSafeTimestamp(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value);
+}
+
+async function fetchRecentStyleRecords(
+  playerId: number,
+  latestTimestamp: number,
+  count: number
+): Promise<Array<{ startTime?: number; [key: string]: unknown }>> {
+  const records: Array<{ startTime?: number; [key: string]: unknown }> = [];
+  let cursor = latestTimestamp;
+
+  while (records.length < count) {
+    const pageLimit = Math.min(500, count - records.length);
+    const page = await fetchPlayerRecordsPage("pl4", playerId, cursor, styleGameMode, pageLimit);
+    if (page.length === 0) break;
+
+    records.push(...page.slice(0, count - records.length));
+
+    if (records.length < count) {
+      const lastPageRecord = page.at(-1);
+      if (!isSafeTimestamp(lastPageRecord?.startTime)) {
+        throw new ApiError(404, "no_records", "No valid records found");
+      }
+
+      cursor = lastPageRecord.startTime - 1;
+    }
+  }
+
+  return records;
 }
 
 styleRouter.get("/", async (request, response, next) => {
@@ -47,17 +84,21 @@ styleRouter.get("/", async (request, response, next) => {
       throw new ApiError(404, "player_not_found", "Player not found");
     }
 
-    if (typeof player.latestTimestamp !== "number") {
+    if (!isSafeTimestamp(player.latestTimestamp)) {
       throw new ApiError(404, "player_not_found", "Player latest timestamp not found");
     }
 
     let from = defaultFrom;
     if (count !== undefined) {
-      const records = await fetchPlayerRecords("pl4", player.id, player.latestTimestamp, styleGameMode, count);
+      const records = await fetchRecentStyleRecords(player.id, player.latestTimestamp, count);
       const lastRecord = records.at(-1);
 
-      if (!lastRecord?.startTime) {
+      if (!lastRecord) {
         throw new ApiError(404, "no_records", "No records found");
+      }
+
+      if (!isSafeTimestamp(lastRecord.startTime)) {
+        throw new ApiError(404, "no_records", "No valid records found");
       }
 
       from = Number(`${lastRecord.startTime}000`);

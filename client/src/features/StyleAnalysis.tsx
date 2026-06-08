@@ -112,6 +112,13 @@ export function StyleAnalysis() {
       return;
     }
 
+    const parsedCount = Number(trimmedCount);
+    if (trimmedCount && (!/^\d+$/.test(trimmedCount) || !Number.isSafeInteger(parsedCount) || parsedCount <= 0)) {
+      setStatus("");
+      setError("대국 수는 양의 정수로 입력해주세요.");
+      return;
+    }
+
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
     abortControllerRef.current?.abort();

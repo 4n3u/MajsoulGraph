@@ -132,6 +132,32 @@ export async function fetchPlayerRecords(
   return records;
 }
 
+export async function fetchPlayerRecordsPage(
+  mode: Mode,
+  playerId: unknown,
+  startTime: unknown,
+  gameModes: unknown,
+  limit: unknown
+): Promise<PlayerRecord[]> {
+  const normalizedPlayerId = requireText(playerId, "playerId");
+  const normalizedStartTime = requireText(startTime, "startTime");
+  const normalizedGameModes = requireText(gameModes, "gameModes");
+  const normalizedLimit = requireText(limit, "limit");
+  const cursor = Number(normalizedStartTime);
+  const pageLimit = Number(normalizedLimit);
+
+  if (!Number.isFinite(cursor)) throw new ApiError(400, "bad_input", "startTime is required");
+  if (!Number.isSafeInteger(pageLimit) || pageLimit <= 0 || pageLimit > 500) {
+    throw new ApiError(400, "bad_input", "limit must be a positive integer up to 500");
+  }
+
+  const url =
+    `${apiBase(mode)}player_records/${encodeURIComponent(normalizedPlayerId)}/${cursor}999/1262304000000` +
+    `?limit=${pageLimit}&mode=${encodeURIComponent(normalizedGameModes)}&descending=true&tag=`;
+
+  return cachedJson<PlayerRecord[]>(url);
+}
+
 export async function fetchPlayerExtendedStats(
   playerId: unknown,
   from: unknown,
