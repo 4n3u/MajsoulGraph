@@ -34,6 +34,10 @@ function apiBase(mode: Mode): string {
 }
 
 function requireText(value: unknown, name: string): string {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+
   if (typeof value !== "string" || value.trim() === "") {
     throw new ApiError(400, "bad_input", `${name} is required`);
   }
@@ -126,4 +130,22 @@ export async function fetchPlayerRecords(
   }
 
   return records;
+}
+
+export async function fetchPlayerExtendedStats(
+  playerId: unknown,
+  from: unknown,
+  to: unknown,
+  gameMode = "16.12.9"
+): Promise<Record<string, number>> {
+  const normalizedPlayerId = requireText(playerId, "playerId");
+  const normalizedFrom = requireText(from, "from");
+  const normalizedTo = requireText(to, "to");
+  const normalizedGameMode = requireText(gameMode, "gameMode");
+
+  return cachedJson<Record<string, number>>(
+    `${apiBase("pl4")}player_extended_stats/${encodeURIComponent(normalizedPlayerId)}/` +
+      `${encodeURIComponent(normalizedFrom)}/${encodeURIComponent(normalizedTo)}` +
+      `?mode=${encodeURIComponent(normalizedGameMode)}&tag=`
+  );
 }

@@ -206,7 +206,9 @@ h1 {
 .input-row input,
 .result-url,
 .point-form-grid input,
-.point-form-grid select {
+.point-form-grid select,
+.style-form-grid input,
+.style-form-grid select {
   border: 1px solid #c8cec8;
   border-radius: 6px;
   color: #1d211f;
@@ -220,7 +222,9 @@ h1 {
 .input-row input:focus-visible,
 .result-url:focus-visible,
 .point-form-grid input:focus-visible,
-.point-form-grid select:focus-visible {
+.point-form-grid select:focus-visible,
+.style-form-grid input:focus-visible,
+.style-form-grid select:focus-visible {
   outline: 3px solid #d6a943;
   outline-offset: 2px;
 }
@@ -389,12 +393,14 @@ h1 {
   max-width: 100%;
 }
 
-.point-trend-form {
+.point-trend-form,
+.style-analysis-form {
   display: grid;
   gap: 8px;
 }
 
-.point-form-grid {
+.point-form-grid,
+.style-form-grid {
   align-items: end;
   display: grid;
   gap: 10px;
@@ -414,7 +420,8 @@ h1 {
   overflow-wrap: anywhere;
 }
 
-.point-form-grid select {
+.point-form-grid select,
+.style-form-grid select {
   background: #ffffff;
 }
 
@@ -433,6 +440,76 @@ h1 {
   display: grid;
   gap: 18px;
   margin-top: 18px;
+}
+
+.style-results {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.style-result-head {
+  align-items: start;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+}
+
+.style-verdict {
+  color: #151816;
+  font-size: 1.22rem;
+  font-weight: 800;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.style-coordinates {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.style-coordinates div,
+.style-stat-list div {
+  background: #f8faf8;
+  border: 1px solid #d9ddd7;
+  border-radius: 6px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.style-coordinates dt,
+.style-stat-list dt {
+  color: #56615a;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.style-coordinates dd,
+.style-stat-list dd {
+  color: #151816;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.style-chart {
+  background: #f8faf8;
+  border: 1px solid #d9ddd7;
+  border-radius: 8px;
+  height: 420px;
+  min-width: 0;
+  width: 100%;
+}
+
+.style-stat-list {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
 }
 
 .point-summary {
@@ -567,7 +644,10 @@ h1 {
   .input-row,
   .result-meta,
   .point-form-grid,
-  .point-summary {
+  .point-summary,
+  .style-form-grid,
+  .style-result-head,
+  .style-stat-list {
     grid-template-columns: 1fr;
   }
 
@@ -587,6 +667,10 @@ h1 {
 
   .point-chart {
     height: 320px;
+  }
+
+  .style-chart {
+    height: 340px;
   }
 
   .rank-history {

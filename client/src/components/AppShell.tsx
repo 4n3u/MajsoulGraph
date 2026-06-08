@@ -3,6 +3,7 @@ import { Tabs } from "@base-ui/react/tabs";
 import { HandImageGenerator } from "../features/HandImageGenerator";
 import { PaipuConverter } from "../features/PaipuConverter";
 import { PointTrendGraph } from "../features/PointTrendGraph";
+import { StyleAnalysis } from "../features/StyleAnalysis";
 import { ToolPlaceholder } from "./ToolPlaceholder";
 import { useMediaQuery } from "./useMediaQuery";
 
@@ -42,6 +43,10 @@ function renderTool(tool: (typeof tools)[number]) {
 
   if (tool.id === "paipu") {
     return <PaipuConverter />;
+  }
+
+  if (tool.id === "style") {
+    return <StyleAnalysis />;
   }
 
   return <ToolPlaceholder title={tool.label} description={tool.note} />;

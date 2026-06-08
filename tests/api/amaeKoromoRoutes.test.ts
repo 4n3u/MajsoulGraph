@@ -272,12 +272,17 @@ describe("Amae-Koromo API routes", () => {
     await assertion;
   });
 
-  test("exposes player-style placeholder route", async () => {
+  test("player-style route requires a nickname", async () => {
     const response = await getJson("/api/player-style");
 
     expect(response).toEqual({
-      status: 200,
-      body: {}
+      status: 400,
+      body: {
+        error: {
+          code: "bad_input",
+          message: "nickname is required"
+        }
+      }
     });
   });
 

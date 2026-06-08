@@ -1,6 +1,13 @@
 import type { ErrorRequestHandler } from "express";
 
-export type ApiErrorCode = "bad_input" | "internal_error" | "not_found" | "upstream_error" | "upstream_timeout";
+export type ApiErrorCode =
+  | "bad_input"
+  | "internal_error"
+  | "not_found"
+  | "no_records"
+  | "player_not_found"
+  | "upstream_error"
+  | "upstream_timeout";
 
 export class ApiError extends Error {
   readonly status: number;

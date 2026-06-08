@@ -19,13 +19,14 @@ test("desktop shell shows heading and all four tools", async ({ page }) => {
   await expect(page.locator(".app-layout")).toHaveClass(/app-layout/);
 });
 
-test("selecting a tool updates the visible placeholder title", async ({ page }) => {
+test("selecting the style tool shows the analysis form", async ({ page }) => {
   await page.goto("/");
 
   await page.getByRole("tab", { name: "사마 스타일 분석" }).click();
 
   await expect(page.getByRole("heading", { name: "사마 스타일 분석" })).toBeVisible();
-  await expect(page.getByText("플레이 스타일과 경향을 분석하는 기능은 이후 작업에서 구현됩니다.")).toBeVisible();
+  await expect(page.getByLabel("Mahjong Soul 닉네임")).toBeVisible();
+  await expect(page.getByRole("button", { name: "분석하기" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "사마 스타일 분석" })).toHaveAttribute(
     "aria-selected",
     "true"
