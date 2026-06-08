@@ -133,7 +133,7 @@ h1 {
 .placeholder-status {
   background: #fff7dd;
   border: 1px solid #e8cf89;
-  border-radius: 999px;
+  border-radius: 8px;
   color: #654c12;
   display: inline-flex;
   font-size: 0.78rem;
