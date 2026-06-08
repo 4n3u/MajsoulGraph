@@ -7,10 +7,10 @@ const tools = [
   "패보 주소 변환"
 ];
 
-test("desktop shell shows heading and all four tools", async ({ page }) => {
+test("shell omits the app header block and shows all four tools", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: "Majsoul Graph" })).toBeVisible();
+  await expect(page.locator("#root > div > header > div")).toHaveCount(0);
 
   for (const tool of tools) {
     await expect(page.getByRole("tab", { name: tool })).toBeVisible();

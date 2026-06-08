@@ -63,13 +63,6 @@ export function AppShell() {
       onValueChange={(value) => setSelectedTool(value as ToolId)}
       orientation={isMobile ? "horizontal" : "vertical"}
     >
-      <header className="app-header">
-        <div>
-          <p className="app-kicker">Mahjong utility workspace</p>
-          <h1>Majsoul Graph</h1>
-        </div>
-      </header>
-
       <div className="app-layout">
         <aside className="tool-nav" aria-label="도구">
           <div className="nav-heading">도구 선택</div>
