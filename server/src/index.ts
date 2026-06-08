@@ -2,6 +2,9 @@ import express from "express";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { errorHandler } from "./routes/errors";
+import { playersRouter } from "./routes/players";
+import { styleRouter } from "./routes/style";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -22,9 +25,14 @@ export function createApp(options: { clientDist?: string } = {}) {
     response.json({ ok: true });
   });
 
+  app.use("/api", playersRouter);
+  app.use("/api/player-style", styleRouter);
+
   app.use("/api", (_request, response) => {
     response.status(404).json({ error: { code: "not_found", message: "Route not found" } });
   });
+
+  app.use(errorHandler);
 
   app.use(express.static(clientDist));
 
