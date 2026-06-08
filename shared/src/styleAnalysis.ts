@@ -17,6 +17,15 @@ export type ProcessedStyleStats = {
 
 export type StyleKey = keyof ProcessedStyleStats;
 
+export type StyleIntensity = "초중증" | "중증" | "중등도" | "경증" | "중립";
+export type StyleLabel =
+  | "후공 반격형"
+  | "선공 회피형"
+  | "멘젠 고득점형"
+  | "후로 속공형"
+  | "철벽 방어형"
+  | "적극 참여형";
+
 export const statConstants: Record<StyleKey, { mean: number; stdDev: number }> = {
   horyuRate: { mean: 0.229400816, stdDev: 0.01018886 },
   houjuRate: { mean: 0.11106952, stdDev: 0.009595166 },
@@ -105,18 +114,18 @@ export function calculateCoordinates(stdStats: Record<StyleKey, number>): { x: n
 export function analyzeStyle(
   x: number,
   y: number
-): { intensity: string; style: string; distance: number; slope: number } {
+): { intensity: StyleIntensity; style: StyleLabel; distance: number; slope: number } {
   const distance = Math.sqrt(x ** 2 + y ** 2);
   const slope = x !== 0 ? y / x : Number.POSITIVE_INFINITY;
 
-  const intensity =
+  const intensity: StyleIntensity =
     distance > 12.71 ? "초중증" :
     distance > 8.89 ? "중증" :
     distance > 3.2 ? "중등도" :
     distance > 1.47 ? "경증" :
     "중립";
 
-  let style: string;
+  let style: StyleLabel;
   if (slope > 1) {
     style = x > 0 ? "후공 반격형" : "선공 회피형";
   } else if (slope > -0.35) {
