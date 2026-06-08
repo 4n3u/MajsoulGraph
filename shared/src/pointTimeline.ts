@@ -50,13 +50,21 @@ export function levelDan(level: number): string {
 export function levelPtBase(level: number): number {
   const tier = Math.floor(level / 100) % 100;
   if (tier >= 6) return 5000;
-  return (ptBase[level % 1000] ?? 50) * 100;
+  const base = ptBase[level % 1000];
+  if (base === undefined) {
+    throw new Error(`Unsupported point base for level ${level}`);
+  }
+  return base * 100;
 }
 
 export function getRank(players: PlayerRecord[], targetAccountId: number): number {
-  return [...players]
+  const rankIndex = [...players]
     .sort((a, b) => b.score - a.score)
-    .findIndex((player) => player.accountId === targetAccountId) + 1;
+    .findIndex((player) => player.accountId === targetAccountId);
+  if (rankIndex < 0) {
+    throw new Error(`Target account not found: ${targetAccountId}`);
+  }
+  return rankIndex + 1;
 }
 
 export function buildPointTimeline(input: {

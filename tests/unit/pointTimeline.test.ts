@@ -6,6 +6,7 @@ describe("rank labels and point bases", () => {
     expect(levelDan(10301)).toBe("걸1");
     expect(levelPtBase(10301)).toBe(600);
     expect(levelPtBase(10701)).toBe(5000);
+    expect(() => levelPtBase(10203)).toThrow("Unsupported point base");
   });
 });
 
@@ -37,6 +38,9 @@ describe("point timeline", () => {
     ];
 
     expect(getRank(games[0]!.players, 1)).toBe(1);
+    expect(() => getRank([{ accountId: 2, score: 30000, level: 10301, gradingScore: 15 }], 1)).toThrow(
+      "Target account not found"
+    );
 
     const result = buildPointTimeline({
       recordsDescending: [...games].reverse(),
