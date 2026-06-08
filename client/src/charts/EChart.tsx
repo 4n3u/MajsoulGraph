@@ -13,9 +13,11 @@ import {
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import type { ComposeOption, EChartsType } from "echarts/core";
-import type { XAXisComponentOption, YAXisComponentOption } from "echarts/types/dist/option";
+import type { XAXisComponentOption, YAXisComponentOption } from "echarts";
 
 echarts.use([LineChart, ScatterChart, GridComponent, TooltipComponent, DataZoomComponent, MarkLineComponent, CanvasRenderer]);
+
+const replaceOption = { notMerge: true };
 
 export type ChartOption = ComposeOption<
   | LineSeriesOption
@@ -45,14 +47,23 @@ export function EChart({ option, className, ariaLabel = "Chart" }: EChartProps) 
 
     const chart = echarts.init(containerRef.current);
     chartRef.current = chart;
-    chart.setOption(option);
+    const container = containerRef.current;
 
     const handleResize = () => {
       chart.resize();
     };
+    const resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => {
+            chart.resize();
+          });
+
+    resizeObserver?.observe(container);
     window.addEventListener("resize", handleResize);
 
     return () => {
+      resizeObserver?.disconnect();
       window.removeEventListener("resize", handleResize);
       chart.dispose();
       chartRef.current = null;
@@ -60,7 +71,7 @@ export function EChart({ option, className, ariaLabel = "Chart" }: EChartProps) 
   }, []);
 
   useEffect(() => {
-    chartRef.current?.setOption(option);
+    chartRef.current?.setOption(option, replaceOption);
   }, [option]);
 
   return <div ref={containerRef} className={className} role="img" aria-label={ariaLabel} />;
