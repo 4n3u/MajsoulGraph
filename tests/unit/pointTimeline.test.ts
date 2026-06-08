@@ -52,7 +52,31 @@ describe("point timeline", () => {
     });
 
     expect(result.points.map((point) => point.point)).toEqual([600, 645, 650]);
+    expect(result.rankHistory[0]).toMatchObject({
+      fromLevelLabel: "사3",
+      toLevelLabel: "걸1",
+      pointBefore: 600,
+      pointAfter: 645
+    });
     expect(result.summary.gameCount).toBe(2);
     expect(result.summary.highPoint).toBe(650);
+  });
+
+  it("rejects unsupported game modes", () => {
+    const validGame = {
+      modeId: 16,
+      startTime: 1000,
+      endTime: 2000,
+      players: [{ accountId: 1, score: 45000, level: 10301, gradingScore: 45 }]
+    };
+
+    expect(() =>
+      buildPointTimeline({
+        recordsDescending: [{ ...validGame, modeId: 999 }],
+        targetAccountId: 1,
+        initialLevel: 10301,
+        historyLevel: 10203
+      })
+    ).toThrow("Unsupported game mode");
   });
 });
