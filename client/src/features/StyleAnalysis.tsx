@@ -162,7 +162,6 @@ export function StyleAnalysis() {
   return (
     <section className="tool-card style-analysis" aria-labelledby="style-analysis-title">
       <div className="tool-card-header">
-        <p className="tool-card-kicker">Style analysis</p>
         <h2 id="style-analysis-title">사마 스타일 분석</h2>
       </div>
 

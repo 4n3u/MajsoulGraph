@@ -111,7 +111,6 @@ export function PaipuConverter() {
   return (
     <section className="tool-card paipu-converter" aria-labelledby="paipu-converter-title">
       <div className="tool-card-header">
-        <p className="tool-card-kicker">Paipu URL converter</p>
         <h2 id="paipu-converter-title">패보 주소 변환</h2>
       </div>
 

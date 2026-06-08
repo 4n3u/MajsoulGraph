@@ -195,7 +195,6 @@ export function HandImageGenerator() {
   return (
     <section className="tool-card hand-generator" aria-labelledby="hand-generator-title">
       <div className="tool-card-header">
-        <p className="tool-card-kicker">Hand image generator</p>
         <h2 id="hand-generator-title">손패 이미지 생성</h2>
       </div>
 

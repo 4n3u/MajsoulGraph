@@ -11,6 +11,7 @@ test("shell omits the app header block and shows all four tools", async ({ page 
   await page.goto("/");
 
   await expect(page.locator("#root > div > header > div")).toHaveCount(0);
+  await expect(page.locator(".tool-card-kicker")).toHaveCount(0);
 
   for (const tool of tools) {
     await expect(page.getByRole("tab", { name: tool })).toBeVisible();

@@ -229,7 +229,6 @@ export function PointTrendGraph() {
   return (
     <section className="tool-card point-trend" aria-labelledby="point-trend-title">
       <div className="tool-card-header">
-        <p className="tool-card-kicker">Point trend graph</p>
         <h2 id="point-trend-title">포인트 추이 그래프</h2>
       </div>
 
