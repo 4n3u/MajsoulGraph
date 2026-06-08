@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Tabs } from "@base-ui/react/tabs";
+import { PaipuConverter } from "../features/PaipuConverter";
 import { ToolPlaceholder } from "./ToolPlaceholder";
 import { useMediaQuery } from "./useMediaQuery";
 
@@ -27,6 +28,14 @@ const tools: Array<{ id: ToolId; label: string; note: string }> = [
     note: "패보 주소 변환 기능은 이후 작업에서 구현됩니다."
   }
 ];
+
+function renderTool(tool: (typeof tools)[number]) {
+  if (tool.id === "paipu") {
+    return <PaipuConverter />;
+  }
+
+  return <ToolPlaceholder title={tool.label} description={tool.note} />;
+}
 
 export function AppShell() {
   const [selectedTool, setSelectedTool] = useState<ToolId>("points");
@@ -61,7 +70,7 @@ export function AppShell() {
         <main className="workspace">
           {tools.map((tool) => (
             <Tabs.Panel className="tool-panel" key={tool.id} value={tool.id}>
-              <ToolPlaceholder title={tool.label} description={tool.note} />
+              {renderTool(tool)}
             </Tabs.Panel>
           ))}
         </main>
