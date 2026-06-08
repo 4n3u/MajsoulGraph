@@ -70,6 +70,14 @@ async function parseJsonResponse<T>(response: Response, fallbackMessage: string)
   return body;
 }
 
+async function fetchOrThrow(url: string, fallbackMessage: string): Promise<Response> {
+  try {
+    return await fetch(url);
+  } catch {
+    throw new Error(fallbackMessage);
+  }
+}
+
 async function nextFrame(): Promise<void> {
   await new Promise<void>((resolve) => {
     window.setTimeout(() => {
@@ -119,7 +127,7 @@ export function PointTrendGraph() {
         nickname: trimmedNickname
       });
       const searchBody = await parseJsonResponse<SearchResponse>(
-        await fetch(`/api/search-player?${searchParams.toString()}`),
+        await fetchOrThrow(`/api/search-player?${searchParams.toString()}`, "닉네임 검색에 실패했습니다."),
         "닉네임 검색에 실패했습니다."
       );
       const player = searchBody.players?.[sameNameIndex];
@@ -140,7 +148,7 @@ export function PointTrendGraph() {
         gameModes: config.gameModes
       });
       const recordsBody = await parseJsonResponse<RecordsResponse>(
-        await fetch(`/api/player-records?${recordsParams.toString()}`),
+        await fetchOrThrow(`/api/player-records?${recordsParams.toString()}`, "패보를 불러오지 못했습니다."),
         "패보를 불러오지 못했습니다."
       );
 
