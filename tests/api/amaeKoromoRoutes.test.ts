@@ -1,6 +1,6 @@
 import { createServer, type Server } from "node:http";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { createApp } from "../../server/src/index";
+import { createApp, startServer } from "../../server/src/index";
 import { ApiError, errorHandler } from "../../server/src/routes/errors";
 import { cachedJson, clearAmaeKoromoCache } from "../../server/src/services/amaeKoromo";
 
@@ -27,6 +27,14 @@ async function close(server: Server): Promise<void> {
       if (error) reject(error);
       else resolve();
     });
+  });
+}
+
+async function waitForListening(server: Server): Promise<void> {
+  if (server.listening) return;
+
+  await new Promise<void>((resolve) => {
+    server.once("listening", () => resolve());
   });
 }
 
@@ -86,6 +94,28 @@ describe("Amae-Koromo API routes", () => {
       "https://5-data.amae-koromo.com/api/v2/pl4/search_player/Alice",
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
+  });
+
+  test("startServer keeps a listening API server handle", async () => {
+    const server = startServer({
+      clientDist: "public",
+      host: "127.0.0.1",
+      log: () => undefined,
+      port: 0
+    });
+
+    try {
+      await waitForListening(server);
+      const address = server.address();
+      if (!address || typeof address === "string") throw new Error("Expected TCP server address");
+
+      const response = await originalFetch(`http://127.0.0.1:${address.port}/api/health`);
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ ok: true });
+    } finally {
+      await close(server);
+    }
   });
 
   test("returns normalized JSON error for invalid mode", async () => {
