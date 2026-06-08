@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { analyzeStyle, calculateCoordinates, getStandardizedStats, processStats } from "@shared/styleAnalysis";
+import {
+  analyzeStyle,
+  calculateCoordinates,
+  getStandardizedStats,
+  processStats,
+  xWeights,
+  yWeights
+} from "@shared/styleAnalysis";
 
 describe("style analysis", () => {
   it("processes raw stats with the same truncation rules as the Python version", () => {
@@ -26,5 +33,10 @@ describe("style analysis", () => {
     const result = analyzeStyle(15, 20);
     expect(result.intensity).toBe("초중증");
     expect(result.style).toBe("후공 반격형");
+  });
+
+  it("exposes legacy style weights", () => {
+    expect(xWeights.horyuRate).toBeCloseTo(-1.166081274);
+    expect(yWeights.riichiFirstRate).toBeCloseTo(-2.393675857);
   });
 });

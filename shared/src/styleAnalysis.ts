@@ -32,7 +32,7 @@ export const statConstants: Record<StyleKey, { mean: number; stdDev: number }> =
   riichiChaseRate: { mean: 0.171840221, stdDev: 0.021060104 }
 };
 
-const xWeights: Record<StyleKey, number> = {
+export const xWeights: Record<StyleKey, number> = {
   horyuRate: -1.166081274,
   houjuRate: -0.202381694,
   furoRate: -1.258740534,
@@ -47,7 +47,7 @@ const xWeights: Record<StyleKey, number> = {
   riichiChaseRate: 0.546947012
 };
 
-const yWeights: Record<StyleKey, number> = {
+export const yWeights: Record<StyleKey, number> = {
   horyuRate: 0.22551386,
   houjuRate: 0.889258806,
   furoRate: -0.453560713,
