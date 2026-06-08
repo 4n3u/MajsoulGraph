@@ -56,6 +56,13 @@ describe("style chart options", () => {
             expect.objectContaining({ name: "화료율", value: [-20, 3.9] }),
             expect.objectContaining({ name: "리치 추격률", value: [14.4, 20] })
           ])
+        }),
+        expect.objectContaining({
+          type: "scatter",
+          data: expect.arrayContaining([
+            expect.objectContaining({ name: "후공 반격형", value: [7, 22] }),
+            expect.objectContaining({ name: "철벽 방어형", value: [7, -25] })
+          ])
         })
       ])
     );
@@ -79,6 +86,21 @@ describe("style chart options", () => {
               [
                 { coord: [-30, 10.5] },
                 { coord: [30, -10.5] }
+              ]
+            ])
+          })
+        }),
+        expect.objectContaining({
+          name: "Axes",
+          data: [
+            [-30, 0],
+            [30, 0]
+          ],
+          markLine: expect.objectContaining({
+            data: expect.arrayContaining([
+              [
+                { coord: [0, -30] },
+                { coord: [0, 30] }
               ]
             ])
           })

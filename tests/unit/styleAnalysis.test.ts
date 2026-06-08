@@ -9,11 +9,11 @@ import {
 } from "@shared/styleAnalysis";
 
 describe("style analysis", () => {
-  it("processes raw stats with the same truncation rules as the Python version", () => {
+  it("preserves source stat precision before standardization", () => {
     const processed = processStats({ "和牌率": 0.229400816, "平均打点": 6454.787778, "和了巡数": 12.12006667 });
-    expect(processed.horyuRate).toBe(0.22);
-    expect(processed.averageScore).toBe(6454);
-    expect(processed.avgHoryuTurn).toBe(12);
+    expect(processed.horyuRate).toBe(0.229400816);
+    expect(processed.averageScore).toBe(6454.787778);
+    expect(processed.avgHoryuTurn).toBe(12.12006667);
   });
 
   it("classifies zero standardized stats as neutral", () => {

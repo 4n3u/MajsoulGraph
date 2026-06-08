@@ -22,12 +22,12 @@ const guidePoints = [
 ] as const;
 
 const styleRegionLabels = [
-  { name: "적극 참여형", value: [-18, 11] },
-  { name: "후공 반격형", value: [16, 17] },
-  { name: "후로 속공형", value: [-17, -13] },
-  { name: "멘젠 고득점형", value: [17, -8] },
-  { name: "선공 회피형", value: [-12, -23] },
-  { name: "철벽 방어형", value: [13, 23] }
+  { name: "적극 참여형", value: [-15, 22] },
+  { name: "후공 반격형", value: [7, 22] },
+  { name: "후로 속공형", value: [-25, -4] },
+  { name: "멘젠 고득점형", value: [17, 1] },
+  { name: "선공 회피형", value: [-15, -25] },
+  { name: "철벽 방어형", value: [7, -25] }
 ] as const;
 
 export function buildStyleChartOptions(input: StyleChartInput): ChartOption {
@@ -93,6 +93,34 @@ export function buildStyleChartOptions(input: StyleChartInput): ChartOption {
             [
               { coord: [-30, 10.5] },
               { coord: [30, -10.5] }
+            ]
+          ]
+        }
+      },
+      {
+        name: "Axes",
+        type: "line",
+        silent: true,
+        symbol: "none",
+        lineStyle: {
+          color: "#111827",
+          width: 1
+        },
+        data: [
+          [-30, 0],
+          [30, 0]
+        ],
+        markLine: {
+          silent: true,
+          symbol: "none",
+          lineStyle: {
+            color: "#111827",
+            width: 1
+          },
+          data: [
+            [
+              { coord: [0, -30] },
+              { coord: [0, 30] }
             ]
           ]
         }

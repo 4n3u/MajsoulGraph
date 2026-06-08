@@ -73,18 +73,18 @@ export const yWeights: Record<StyleKey, number> = {
 
 export function processStats(stats: RawStyleStats): ProcessedStyleStats {
   return {
-    horyuRate: Math.trunc((stats["和牌率"] ?? 0) * 100) / 100,
-    houjuRate: Math.trunc((stats["放铳率"] ?? 0) * 100) / 100,
-    furoRate: Math.trunc((stats["副露率"] ?? 0) * 100) / 100,
-    riichiRate: Math.trunc((stats["立直率"] ?? 0) * 100) / 100,
-    damaRate: Math.trunc((stats["默听率"] ?? 0) * 100) / 100,
-    averageScore: Math.trunc(stats["平均打点"] ?? 0),
-    avgHoryuTurn: Math.trunc(stats["和了巡数"] ?? 0),
-    avgHoujuScore: Math.trunc(stats["平均铳点"] ?? 0),
-    ryukyokuRate: Math.trunc((stats["流听率"] ?? 0) * 100) / 100,
-    riichiTurn: Math.trunc(stats["立直巡目"] ?? 0),
-    riichiFirstRate: Math.trunc((stats["先制率"] ?? 0) * 100) / 100,
-    riichiChaseRate: Math.trunc((stats["追立率"] ?? 0) * 100) / 100
+    horyuRate: stats["和牌率"] ?? 0,
+    houjuRate: stats["放铳率"] ?? 0,
+    furoRate: stats["副露率"] ?? 0,
+    riichiRate: stats["立直率"] ?? 0,
+    damaRate: stats["默听率"] ?? 0,
+    averageScore: stats["平均打点"] ?? 0,
+    avgHoryuTurn: stats["和了巡数"] ?? 0,
+    avgHoujuScore: stats["平均铳点"] ?? 0,
+    ryukyokuRate: stats["流听率"] ?? 0,
+    riichiTurn: stats["立直巡目"] ?? 0,
+    riichiFirstRate: stats["先制率"] ?? 0,
+    riichiChaseRate: stats["追立率"] ?? 0
   };
 }
 

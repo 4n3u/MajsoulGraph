@@ -106,8 +106,8 @@ describe("player style API route", () => {
       player: { id: 123, nickname: "Tester" },
       processed: {
         horyuRate: 0.32,
-        averageScore: 7200,
-        avgHoryuTurn: 11
+        averageScore: 7200.9,
+        avgHoryuTurn: 11.8
       },
       point: {
         x: expect.any(Number),
