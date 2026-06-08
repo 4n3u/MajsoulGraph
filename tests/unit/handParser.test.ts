@@ -31,6 +31,22 @@ describe("hand parser", () => {
     expect(() => parsePaiGroups("m1111111111111111111")).toThrow("maximum 18");
   });
 
+  it("rejects malformed groups without any valid segments", () => {
+    expect(() => parsePaiGroups("abc")).toThrow("Invalid tile group");
+  });
+
+  it("rejects malformed groups with partial segment matches", () => {
+    expect(() => parsePaiGroups("m12!p3")).toThrow("Invalid tile group");
+  });
+
+  it("rejects unsupported suits", () => {
+    expect(() => parsePaiGroups("x1")).toThrow("Unsupported tile suit");
+  });
+
+  it("rejects honor digits without production assets", () => {
+    expect(() => parsePaiGroups("z89")).toThrow("Unsupported tile digit");
+  });
+
   it("returns no groups for whitespace-only input", () => {
     expect(parsePaiGroups(" \n\t ")).toEqual([]);
   });
