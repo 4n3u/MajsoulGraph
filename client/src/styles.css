@@ -717,13 +717,6 @@ h1 {
   overflow-wrap: anywhere;
 }
 
-.copy-status {
-  color: var(--text-muted);
-  font-size: 0.86rem;
-  font-weight: 700;
-  margin: 10px 0 0;
-}
-
 .hand-preview-panel {
   border-top: 1px solid var(--border-subtle);
   margin-top: 18px;

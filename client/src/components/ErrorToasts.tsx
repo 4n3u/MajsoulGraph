@@ -2,6 +2,7 @@ import { useCallback, type ReactNode } from "react";
 import { Toast } from "@base-ui/react/toast";
 
 const errorToastId = "app-error-toast";
+const successToastId = "app-success-toast";
 
 type ErrorToastProviderProps = {
   children: ReactNode;
@@ -47,6 +48,23 @@ export function useErrorToast() {
         description: message,
         priority: "high",
         type: "error"
+      });
+    },
+    [toastManager]
+  );
+}
+
+export function useSuccessToast() {
+  const toastManager = Toast.useToastManager();
+
+  return useCallback(
+    (message: string, title = "완료") => {
+      toastManager.add({
+        id: successToastId,
+        title,
+        description: message,
+        priority: "low",
+        type: "success"
       });
     },
     [toastManager]

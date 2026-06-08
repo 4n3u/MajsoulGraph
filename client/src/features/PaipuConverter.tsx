@@ -7,7 +7,7 @@ import {
   zone
 } from "@shared/paipu";
 import { Button, TextField } from "../components/BaseControls";
-import { useErrorToast } from "../components/ErrorToasts";
+import { useErrorToast, useSuccessToast } from "../components/ErrorToasts";
 
 type ConversionResult = {
   accountId: number;
@@ -83,12 +83,11 @@ function convertPaipuUrl(rawValue: string): ConversionResult {
 export function PaipuConverter() {
   const [input, setInput] = useState("");
   const [result, setResult] = useState<ConversionResult | null>(null);
-  const [copyStatus, setCopyStatus] = useState("");
   const showError = useErrorToast();
+  const showSuccess = useSuccessToast();
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setCopyStatus("");
 
     try {
       setResult(convertPaipuUrl(input));
@@ -105,9 +104,8 @@ export function PaipuConverter() {
 
     try {
       await navigator.clipboard.writeText(result.convertedUrl);
-      setCopyStatus("복사됨");
+      showSuccess("패보 주소를 클립보드에 복사했습니다.", "복사됨");
     } catch {
-      setCopyStatus("");
       showError("복사 실패");
     }
   }
@@ -165,11 +163,6 @@ export function PaipuConverter() {
               <dd>{result.region}</dd>
             </div>
           </dl>
-          {copyStatus ? (
-            <p className="copy-status" role="status">
-              {copyStatus}
-            </p>
-          ) : null}
         </section>
       ) : null}
     </section>

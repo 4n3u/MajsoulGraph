@@ -16,6 +16,13 @@ async function expectErrorToast(page: Page, message: string) {
   await expect(toast).toContainText(message);
 }
 
+async function expectToast(page: Page, title: string, message: string) {
+  const toast = page.locator(".base-toast");
+
+  await expect(toast).toContainText(title);
+  await expect(toast).toContainText(message);
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
   await page.getByRole("tab", { name: "패보 주소 변환" }).click();
@@ -37,6 +44,20 @@ test("converts ordinary standard UUID paipu URL to anonymous URL", async ({ page
 
   await expect(page.getByRole("heading", { name: "변환된 익명 패보 주소" })).toBeVisible();
   await expect(page.getByLabel("변환된 패보 주소")).toHaveValue(standardUuidAnonymousUrl);
+});
+
+test("shows copy confirmation as a toast", async ({ context, page }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+
+  await page.getByLabel("패보 주소 입력").fill(ordinaryUrl);
+  await page.getByRole("button", { name: "변환" }).click();
+  await page.getByRole("button", { name: "복사" }).click();
+
+  await expectToast(page, "복사됨", "패보 주소를 클립보드에 복사했습니다.");
+  await expect(page.locator(".copy-status")).toHaveCount(0);
+  await expect
+    .poll(async () => page.evaluate(() => navigator.clipboard.readText()))
+    .toBe(anonymousUrl);
 });
 
 test("converts anonymous paipu URL to ordinary URL", async ({ page }) => {
