@@ -57,7 +57,7 @@ function drawTile(context: CanvasRenderingContext2D, tile: TileRenderData, x: nu
 
   context.save();
   context.translate(x + footprint.width / 2, y + footprint.height / 2);
-  context.rotate(Math.PI / 2);
+  context.rotate(-Math.PI / 2);
   context.drawImage(tile.image, -tile.image.naturalWidth / 2, -tile.image.naturalHeight / 2);
   context.restore();
 }
