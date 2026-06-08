@@ -153,6 +153,66 @@ describe("Amae-Koromo API routes", () => {
     );
   });
 
+  test("returns bad_input for invalid player-record query values before calling upstream", async () => {
+    const upstreamFetch = vi.fn();
+    vi.stubGlobal("fetch", upstreamFetch);
+
+    const badPlayer = await getJson(
+      "/api/player-records?mode=pl4&playerId=abc&startTime=1700000001&gameModes=16,12"
+    );
+    const badStartTime = await getJson("/api/player-records?mode=pl4&playerId=42&startTime=1.5&gameModes=16,12");
+    const badGameModes = await getJson(
+      "/api/player-records?mode=pl4&playerId=42&startTime=1700000001&gameModes=16,12,bad"
+    );
+
+    expect(badPlayer.status).toBe(400);
+    expect(badStartTime.status).toBe(400);
+    expect(badGameModes.status).toBe(400);
+    expect(upstreamFetch).not.toHaveBeenCalled();
+  });
+
+  test("maps malformed search-player upstream bodies to upstream_error", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ players: [] }), { status: 200, headers: { "content-type": "application/json" } })
+      )
+    );
+
+    const response = await getJson("/api/search-player?mode=pl4&nickname=Malformed");
+
+    expect(response).toEqual({
+      status: 502,
+      body: {
+        error: {
+          code: "upstream_error",
+          message: "Amae-Koromo request failed"
+        }
+      }
+    });
+  });
+
+  test("maps malformed player-record upstream bodies to upstream_error", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ records: [] }), { status: 200, headers: { "content-type": "application/json" } })
+      )
+    );
+
+    const response = await getJson("/api/player-records?mode=pl4&playerId=42&startTime=1700000001&gameModes=16,12");
+
+    expect(response).toEqual({
+      status: 502,
+      body: {
+        error: {
+          code: "upstream_error",
+          message: "Amae-Koromo request failed"
+        }
+      }
+    });
+  });
+
   test("paginates full player-record pages using second-based cursors", async () => {
     const firstPage = Array.from({ length: 500 }, (_, index) => ({
       uuid: `game-${index}`,

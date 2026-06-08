@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -53,6 +53,32 @@ describe("scaffold", () => {
       );
     } finally {
       await rm(clientDist, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps nested result areas unframed inside tool cards", async () => {
+    const css = await readFile(path.resolve("client/src/styles.css"), "utf8");
+    const nestedResultSelectors = [
+      ".result-panel",
+      ".result-meta div",
+      ".hand-preview-panel",
+      ".style-coordinates div,\n.style-stat-list div",
+      ".style-chart",
+      ".point-summary div",
+      ".point-chart",
+      ".rank-history",
+      ".rank-history-row"
+    ];
+
+    for (const selector of nestedResultSelectors) {
+      const start = css.indexOf(`${selector} {`);
+      expect(start, `${selector} selector should exist`).toBeGreaterThanOrEqual(0);
+      const end = css.indexOf("}", start);
+      const block = css.slice(start, end);
+
+      expect(block, `${selector} should not set a card background`).not.toMatch(/^\s*background:/m);
+      expect(block, `${selector} should not set a card border`).not.toMatch(/^\s*border:/m);
+      expect(block, `${selector} should not set a card radius`).not.toMatch(/^\s*border-radius:/m);
     }
   });
 });

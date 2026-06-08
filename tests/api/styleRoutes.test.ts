@@ -339,7 +339,7 @@ describe("player style API route", () => {
     });
   });
 
-  test("returns player_not_found when latestTimestamp is not a safe integer", async () => {
+  test("returns upstream_error when latestTimestamp is not a safe integer", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -353,11 +353,11 @@ describe("player style API route", () => {
     const response = await getJson("/api/player-style?nickname=Tester");
 
     expect(response).toEqual({
-      status: 404,
+      status: 502,
       body: {
         error: {
-          code: "player_not_found",
-          message: "Player latest timestamp not found"
+          code: "upstream_error",
+          message: "Amae-Koromo request failed"
         }
       }
     });

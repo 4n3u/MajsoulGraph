@@ -45,6 +45,72 @@ function requireText(value: unknown, name: string): string {
   return value.trim();
 }
 
+function upstreamShapeError(): ApiError {
+  return new ApiError(502, "upstream_error", "Amae-Koromo request failed");
+}
+
+function requirePositiveSafeIntegerText(value: unknown, name: string): string {
+  const text = requireText(value, name);
+  if (!/^\d+$/.test(text)) {
+    throw new ApiError(400, "bad_input", `${name} must be a positive integer`);
+  }
+
+  const numberValue = Number(text);
+  if (!Number.isSafeInteger(numberValue) || numberValue <= 0) {
+    throw new ApiError(400, "bad_input", `${name} must be a positive integer`);
+  }
+
+  return String(numberValue);
+}
+
+function requireGameModesText(value: unknown): string {
+  const text = requireText(value, "gameModes");
+  const commaModeList = /^\d{1,3}(?:,\d{1,3})*$/.test(text);
+  const dottedMode = /^\d{1,3}(?:\.\d{1,3})*$/.test(text);
+  const tokenCount = text.split(/[,.]/).length;
+
+  if ((!commaModeList && !dottedMode) || tokenCount > 12 || text.length > 64) {
+    throw new ApiError(400, "bad_input", "gameModes must be a bounded numeric mode list");
+  }
+
+  return text;
+}
+
+function assertPlayerSearchResult(value: unknown): UpstreamPlayer {
+  if (typeof value !== "object" || value === null) throw upstreamShapeError();
+  const player = value as Partial<UpstreamPlayer>;
+  const id = player.id;
+  const nickname = player.nickname;
+  const latestTimestamp = player.latest_timestamp;
+
+  if (typeof id !== "number" || !Number.isSafeInteger(id) || id <= 0 || typeof nickname !== "string") {
+    throw upstreamShapeError();
+  }
+
+  if (
+    latestTimestamp !== undefined &&
+    (typeof latestTimestamp !== "number" || !Number.isSafeInteger(latestTimestamp))
+  ) {
+    throw upstreamShapeError();
+  }
+
+  return {
+    id,
+    nickname,
+    latest_timestamp: latestTimestamp
+  };
+}
+
+function assertPlayerSearchResults(value: unknown): UpstreamPlayer[] {
+  if (!Array.isArray(value)) throw upstreamShapeError();
+  return value.map(assertPlayerSearchResult);
+}
+
+function assertPlayerRecords(value: unknown): PlayerRecord[] {
+  if (!Array.isArray(value)) throw upstreamShapeError();
+  return value as PlayerRecord[];
+}
+
 function writeCache(url: string, value: unknown, now: number): void {
   if (!cache.has(url) && cache.size >= maxCacheEntries) {
     const oldestUrl = cache.keys().next().value as string | undefined;
@@ -90,8 +156,8 @@ export async function cachedJson<T>(url: string): Promise<T> {
 
 export async function searchPlayer(mode: Mode, nickname: unknown): Promise<PlayerSearchResult[]> {
   const normalizedNickname = requireText(nickname, "nickname");
-  const players = await cachedJson<UpstreamPlayer[]>(
-    `${apiBase(mode)}search_player/${encodeURIComponent(normalizedNickname)}`
+  const players = assertPlayerSearchResults(
+    await cachedJson<unknown>(`${apiBase(mode)}search_player/${encodeURIComponent(normalizedNickname)}`)
   );
 
   return players.map((player) => ({
@@ -108,12 +174,10 @@ export async function fetchPlayerRecords(
   gameModes: unknown,
   limit = 500
 ): Promise<PlayerRecord[]> {
-  const normalizedPlayerId = requireText(playerId, "playerId");
-  const normalizedStartTime = requireText(startTime, "startTime");
-  const normalizedGameModes = requireText(gameModes, "gameModes");
+  const normalizedPlayerId = requirePositiveSafeIntegerText(playerId, "playerId");
+  const normalizedStartTime = requirePositiveSafeIntegerText(startTime, "startTime");
+  const normalizedGameModes = requireGameModesText(gameModes);
   let cursor = Number(normalizedStartTime);
-
-  if (!Number.isFinite(cursor)) throw new ApiError(400, "bad_input", "startTime is required");
 
   const records: PlayerRecord[] = [];
 
@@ -121,12 +185,14 @@ export async function fetchPlayerRecords(
     const url =
       `${apiBase(mode)}player_records/${encodeURIComponent(normalizedPlayerId)}/${cursor}999/1262304000000` +
       `?limit=${limit}&mode=${encodeURIComponent(normalizedGameModes)}&descending=true&tag=`;
-    const games = await cachedJson<PlayerRecord[]>(url);
+    const games = assertPlayerRecords(await cachedJson<unknown>(url));
     records.push(...games);
 
     const lastGame = games.at(-1);
-    if (games.length < limit || limit < 500 || !lastGame?.startTime) break;
-    cursor = lastGame.startTime - 1;
+    if (games.length < limit || limit < 500) break;
+    const lastStartTime = lastGame?.startTime;
+    if (typeof lastStartTime !== "number" || !Number.isSafeInteger(lastStartTime)) throw upstreamShapeError();
+    cursor = lastStartTime - 1;
   }
 
   return records;
@@ -139,15 +205,14 @@ export async function fetchPlayerRecordsPage(
   gameModes: unknown,
   limit: unknown
 ): Promise<PlayerRecord[]> {
-  const normalizedPlayerId = requireText(playerId, "playerId");
-  const normalizedStartTime = requireText(startTime, "startTime");
-  const normalizedGameModes = requireText(gameModes, "gameModes");
-  const normalizedLimit = requireText(limit, "limit");
+  const normalizedPlayerId = requirePositiveSafeIntegerText(playerId, "playerId");
+  const normalizedStartTime = requirePositiveSafeIntegerText(startTime, "startTime");
+  const normalizedGameModes = requireGameModesText(gameModes);
+  const normalizedLimit = requirePositiveSafeIntegerText(limit, "limit");
   const cursor = Number(normalizedStartTime);
   const pageLimit = Number(normalizedLimit);
 
-  if (!Number.isFinite(cursor)) throw new ApiError(400, "bad_input", "startTime is required");
-  if (!Number.isSafeInteger(pageLimit) || pageLimit <= 0 || pageLimit > 500) {
+  if (pageLimit > 500) {
     throw new ApiError(400, "bad_input", "limit must be a positive integer up to 500");
   }
 
@@ -155,7 +220,7 @@ export async function fetchPlayerRecordsPage(
     `${apiBase(mode)}player_records/${encodeURIComponent(normalizedPlayerId)}/${cursor}999/1262304000000` +
     `?limit=${pageLimit}&mode=${encodeURIComponent(normalizedGameModes)}&descending=true&tag=`;
 
-  return cachedJson<PlayerRecord[]>(url);
+  return assertPlayerRecords(await cachedJson<unknown>(url));
 }
 
 export async function fetchPlayerExtendedStats(

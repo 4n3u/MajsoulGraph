@@ -277,11 +277,9 @@ h1 {
 }
 
 .result-panel {
-  background: #f8faf8;
-  border: 1px solid #d9ddd7;
-  border-radius: 8px;
+  border-top: 1px solid #d9ddd7;
   margin-top: 18px;
-  padding: 18px;
+  padding-top: 18px;
 }
 
 .result-header {
@@ -313,11 +311,9 @@ h1 {
 }
 
 .result-meta div {
-  background: #ffffff;
-  border: 1px solid #dfe4df;
-  border-radius: 6px;
+  border-left: 3px solid #d9ddd7;
   min-width: 0;
-  padding: 11px 12px;
+  padding: 4px 0 4px 12px;
 }
 
 .result-meta dt {
@@ -374,12 +370,10 @@ h1 {
 }
 
 .hand-preview-panel {
-  background: #f8faf8;
-  border: 1px solid #d9ddd7;
-  border-radius: 8px;
+  border-top: 1px solid #d9ddd7;
   margin-top: 18px;
   overflow: auto;
-  padding: 18px;
+  padding-top: 18px;
 }
 
 .hand-preview-panel[hidden] {
@@ -472,11 +466,9 @@ h1 {
 
 .style-coordinates div,
 .style-stat-list div {
-  background: #f8faf8;
-  border: 1px solid #d9ddd7;
-  border-radius: 6px;
+  border-left: 3px solid #d9ddd7;
   min-width: 0;
-  padding: 12px;
+  padding: 4px 0 4px 12px;
 }
 
 .style-coordinates dt,
@@ -497,11 +489,10 @@ h1 {
 }
 
 .style-chart {
-  background: #f8faf8;
-  border: 1px solid #d9ddd7;
-  border-radius: 8px;
+  border-top: 1px solid #d9ddd7;
   height: 420px;
   min-width: 0;
+  padding-top: 12px;
   width: 100%;
 }
 
@@ -520,11 +511,9 @@ h1 {
 }
 
 .point-summary div {
-  background: #f8faf8;
-  border: 1px solid #d9ddd7;
-  border-radius: 6px;
+  border-left: 3px solid #d9ddd7;
   min-width: 0;
-  padding: 12px;
+  padding: 4px 0 4px 12px;
 }
 
 .point-summary dt {
@@ -544,19 +533,16 @@ h1 {
 }
 
 .point-chart {
-  background: #f8faf8;
-  border: 1px solid #d9ddd7;
-  border-radius: 8px;
+  border-top: 1px solid #d9ddd7;
   height: 380px;
   min-width: 0;
+  padding-top: 12px;
   width: 100%;
 }
 
 .rank-history {
-  background: #f8faf8;
-  border: 1px solid #d9ddd7;
-  border-radius: 8px;
-  padding: 16px;
+  border-top: 1px solid #d9ddd7;
+  padding-top: 16px;
 }
 
 .rank-history h3 {
@@ -573,13 +559,11 @@ h1 {
 
 .rank-history-row {
   align-items: center;
-  background: #ffffff;
-  border: 1px solid #dfe4df;
-  border-radius: 6px;
+  border-top: 1px solid #e2e7e2;
   display: grid;
   gap: 8px;
   grid-template-columns: minmax(96px, 1fr) minmax(96px, 1fr) repeat(3, minmax(58px, auto));
-  padding: 10px 12px;
+  padding: 10px 0;
 }
 
 .rank-history-row span,
