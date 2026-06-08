@@ -1,6 +1,7 @@
 .streamlit/
 docs/
 .superpowers/
+.worktrees/
 
 brainstorm-server.*.log
 
