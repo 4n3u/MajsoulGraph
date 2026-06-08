@@ -27,9 +27,13 @@ describe("paipu uuid conversion", () => {
 describe("account and match id conversion", () => {
   it("converts match id to account id and friend id", () => {
     const accountId = 27769725;
-    const matchId = acc2Match(accountId);
+    const friendId = 27500607;
+    const matchId = 244931874;
+
+    expect(acc2Friend(accountId)).toBe(friendId);
+    expect(acc2Match(accountId)).toBe(matchId);
     expect(mat2Account(matchId)).toBe(accountId);
-    expect(mat2Friend(matchId)).toBe(acc2Friend(accountId));
+    expect(mat2Friend(matchId)).toBe(friendId);
   });
 
   it("detects server region from account id", () => {
