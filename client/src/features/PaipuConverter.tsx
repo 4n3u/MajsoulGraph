@@ -60,7 +60,7 @@ function convertPaipuUrl(rawValue: string): ConversionResult {
   const accountId = mat2Account(matchId);
   const canonicalMatchId = acc2Match(accountId);
 
-  if (accountId <= 0 || canonicalMatchId <= 0 || mat2Account(canonicalMatchId) !== accountId) {
+  if (accountId <= 0 || canonicalMatchId !== matchId) {
     throw new Error("패보 주소의 매치 ID를 확인해 주세요.");
   }
 

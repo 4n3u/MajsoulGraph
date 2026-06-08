@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 
 const ordinaryUrl =
-  "https://game.mahjongsoul.com/?paipu=240101-12345678-abcdef12_a280178470";
+  "https://game.mahjongsoul.com/?paipu=240101-12345678-abcdef12_a244931874";
 const anonymousUrl =
-  "https://game.mahjongsoul.com/?paipu=jmjlln-prtvxz13-79bdfh46_a280178470_2";
+  "https://game.mahjongsoul.com/?paipu=jmjlln-prtvxz13-79bdfh46_a244931874_2";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
@@ -42,6 +42,16 @@ test("shows a Korean error for malformed paipu token and match id", async ({ pag
   await page
     .getByLabel("패보 주소 입력")
     .fill("https://game.mahjongsoul.com/?paipu=foo_a0");
+  await page.getByRole("button", { name: "변환" }).click();
+
+  await expect(page.getByRole("alert")).toContainText("패보 주소");
+  await expect(page.getByRole("heading", { name: /변환된/ })).toBeHidden();
+});
+
+test("shows a Korean error for non-canonical match id", async ({ page }) => {
+  await page
+    .getByLabel("패보 주소 입력")
+    .fill("https://game.mahjongsoul.com/?paipu=240101-12345678-abcdef12_a244931875");
   await page.getByRole("button", { name: "변환" }).click();
 
   await expect(page.getByRole("alert")).toContainText("패보 주소");
