@@ -16,7 +16,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("empty submit shows a Korean validation error", async ({ page }) => {
-  await page.getByRole("button", { name: "분석하기" }).click();
+  await page.getByRole("button", { name: "스타일 분석" }).click();
 
   await expect(page.getByRole("alert")).toHaveText("닉네임을 입력해주세요.");
 });
@@ -34,7 +34,7 @@ test("invalid count shows a Korean validation error without calling the API", as
 
   await page.getByLabel("작혼 닉네임").fill("Tester");
   await page.getByLabel("대국 수").fill("0");
-  await page.getByRole("button", { name: "분석하기" }).click();
+  await page.getByRole("button", { name: "스타일 분석" }).click();
 
   await expect(page.getByRole("alert")).toHaveText("대국 수는 양의 정수로 입력해주세요.");
   expect(apiCalled).toBe(false);
@@ -80,7 +80,7 @@ test("renders style analysis result from mocked API response", async ({ page }) 
   await page.getByLabel("작혼 닉네임").fill("Tester");
   await page.getByLabel("대국 수").fill("50");
   await chooseSelectOption(page, "동일 닉네임 구분", "1");
-  await page.getByRole("button", { name: "분석하기" }).click();
+  await page.getByRole("button", { name: "스타일 분석" }).click();
 
   const result = page.getByLabel("스타일 분석 결과");
   await expect(result.getByText("당신은 중증 멘젠 고득점형입니다.")).toBeVisible();

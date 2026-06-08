@@ -7,10 +7,12 @@ test.beforeEach(async ({ page }) => {
 
 test("generates a visible nonblank hand preview canvas", async ({ page }) => {
   await page.getByLabel("패 입력").fill("m123 p456 s789 z123");
-  await page.getByRole("button", { name: "생성" }).click();
+  await page.getByRole("button", { name: "이미지 생성" }).click();
 
   const canvas = page.getByLabel("생성된 손패 이미지");
   await expect(canvas).toBeVisible();
+  await expect(page.getByText("생성된 손패 이미지")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "이미지 다운로드" })).toBeVisible();
 
   const preview = await canvas.evaluate((element) => {
     const canvasElement = element as HTMLCanvasElement;
@@ -39,7 +41,7 @@ test("generates a visible nonblank hand preview canvas", async ({ page }) => {
 
 test("renders uppercase tiles with legacy counterclockwise rotation", async ({ page }) => {
   await page.getByLabel("패 입력").fill("S1");
-  await page.getByRole("button", { name: "생성" }).click();
+  await page.getByRole("button", { name: "이미지 생성" }).click();
 
   const canvas = page.getByLabel("생성된 손패 이미지");
   await expect(canvas).toBeVisible();
@@ -110,7 +112,7 @@ test("renders uppercase tiles with legacy counterclockwise rotation", async ({ p
 
 test("shows a Korean error for hands over the tile limit", async ({ page }) => {
   await page.getByLabel("패 입력").fill("m1111111111111111111");
-  await page.getByRole("button", { name: "생성" }).click();
+  await page.getByRole("button", { name: "이미지 생성" }).click();
 
   await expect(page.getByRole("alert")).toContainText("18개");
   await expect(page.getByLabel("생성된 손패 이미지")).toBeHidden();

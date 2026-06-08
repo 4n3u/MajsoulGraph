@@ -210,7 +210,7 @@ export function HandImageGenerator() {
             value={input}
           />
           <Button className="primary-button" type="submit" disabled={isGenerating}>
-            {isGenerating ? "생성 중" : "생성"}
+            {isGenerating ? "생성 중" : "이미지 생성"}
           </Button>
         </div>
 
@@ -230,9 +230,8 @@ export function HandImageGenerator() {
 
       <div className="hand-preview-panel" hidden={!hasPreview}>
         <div className="result-header">
-          <h3>생성된 손패 이미지</h3>
           <Button className="secondary-button" type="button" onClick={handleDownload}>
-            PNG 다운로드
+            이미지 다운로드
           </Button>
         </div>
         <canvas ref={canvasRef} aria-label="생성된 손패 이미지" />

@@ -207,7 +207,7 @@ export function StyleAnalysis() {
             value={sameName}
           />
           <Button className="primary-button" type="submit" disabled={isLoading}>
-            {isLoading ? "분석 중..." : "분석하기"}
+            {isLoading ? "분석 중..." : "스타일 분석"}
           </Button>
         </div>
       </form>
