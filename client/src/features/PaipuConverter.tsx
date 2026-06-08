@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import {
+  acc2Match,
   decodePaipuUuid,
   encodePaipuUuid,
   mat2Account,
@@ -15,7 +16,8 @@ type ConversionResult = {
   title: string;
 };
 
-const ordinaryUuidPattern = /^\d{6}-/;
+const ordinaryUuidPattern = /^\d{6}-[0-9a-z]+-[0-9a-z]+$/;
+const anonymousUuidPattern = /^[0-9a-z]+-[0-9a-z]+-[0-9a-z]+$/;
 const paipuPattern = /^([^_]+)_a(\d+)(?:_2)?$/;
 
 function convertPaipuUrl(rawValue: string): ConversionResult {
@@ -44,14 +46,26 @@ function convertPaipuUrl(rawValue: string): ConversionResult {
   const matchIdValue = parsed[2]!;
   const matchId = Number(matchIdValue);
 
-  if (!Number.isSafeInteger(matchId)) {
+  if (!Number.isSafeInteger(matchId) || matchId <= 0) {
     throw new Error("패보 주소의 매치 ID를 확인해 주세요.");
   }
 
   const isOrdinaryUrl = ordinaryUuidPattern.test(uuid);
-  const convertedUuid = isOrdinaryUrl ? encodePaipuUuid(uuid) : decodePaipuUuid(uuid);
-  const convertedPaipu = `${convertedUuid}_a${matchId}${isOrdinaryUrl ? "_2" : ""}`;
+  const decodedUuid = isOrdinaryUrl ? uuid : decodePaipuUuid(uuid);
+
+  if (!isOrdinaryUrl && (!anonymousUuidPattern.test(uuid) || !ordinaryUuidPattern.test(decodedUuid))) {
+    throw new Error("패보 주소의 UUID 형식을 확인해 주세요.");
+  }
+
   const accountId = mat2Account(matchId);
+  const canonicalMatchId = acc2Match(accountId);
+
+  if (accountId <= 0 || canonicalMatchId <= 0 || mat2Account(canonicalMatchId) !== accountId) {
+    throw new Error("패보 주소의 매치 ID를 확인해 주세요.");
+  }
+
+  const convertedUuid = isOrdinaryUrl ? encodePaipuUuid(uuid) : decodedUuid;
+  const convertedPaipu = `${convertedUuid}_a${matchId}${isOrdinaryUrl ? "_2" : ""}`;
 
   url.searchParams.set("paipu", convertedPaipu);
 
@@ -158,7 +172,11 @@ export function PaipuConverter() {
               <dd>{result.region}</dd>
             </div>
           </dl>
-          {copyStatus ? <p className="copy-status">{copyStatus}</p> : null}
+          {copyStatus ? (
+            <p className="copy-status" role="status">
+              {copyStatus}
+            </p>
+          ) : null}
         </section>
       ) : null}
     </section>
