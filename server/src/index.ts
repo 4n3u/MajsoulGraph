@@ -5,11 +5,18 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export function createApp() {
-  const app = express();
+function resolveClientDist(clientDistOverride?: string): string {
+  if (clientDistOverride) return clientDistOverride;
+
   const bundledClientDist = path.resolve(dirname, "../client");
-  const sourceClientDist = path.resolve(dirname, "../../dist/client");
-  const clientDist = existsSync(path.join(bundledClientDist, "index.html")) ? bundledClientDist : sourceClientDist;
+  if (existsSync(path.join(bundledClientDist, "index.html"))) return bundledClientDist;
+
+  return path.resolve(dirname, "../../dist/client");
+}
+
+export function createApp(options: { clientDist?: string } = {}) {
+  const app = express();
+  const clientDist = resolveClientDist(options.clientDist);
 
   app.get("/api/health", (_request, response) => {
     response.json({ ok: true });
