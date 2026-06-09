@@ -122,7 +122,7 @@ export function AppShell() {
         <main className="workspace">
           {tools.map((tool) => (
             <Tabs.Panel className="tool-panel" key={tool.id} value={tool.id}>
-              <Suspense fallback={<ToolPlaceholder title={tool.label} description="불러오는 중" />}>
+              <Suspense fallback={<ToolPlaceholder title={tool.label} />}>
                 {selectedTool === tool.id ? renderTool(tool) : null}
               </Suspense>
             </Tabs.Panel>

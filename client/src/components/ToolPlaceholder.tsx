@@ -2,7 +2,7 @@ import { useId } from "react";
 
 interface ToolPlaceholderProps {
   title: string;
-  description: string;
+  description?: string;
 }
 
 export function ToolPlaceholder({ title, description }: ToolPlaceholderProps) {
@@ -10,9 +10,8 @@ export function ToolPlaceholder({ title, description }: ToolPlaceholderProps) {
 
   return (
     <section className="tool-placeholder" aria-labelledby={titleId}>
-      <div className="placeholder-status">준비 중</div>
       <h2 id={titleId}>{title}</h2>
-      <p>{description}</p>
+      {description ? <p>{description}</p> : null}
     </section>
   );
 }

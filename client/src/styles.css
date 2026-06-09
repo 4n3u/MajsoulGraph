@@ -166,15 +166,6 @@ h1 {
   padding: 28px;
 }
 
-.placeholder-status {
-  color: var(--text-muted);
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 400;
-  line-height: 1.25;
-  margin-bottom: 12px;
-}
-
 .tool-placeholder h2 {
   color: var(--text);
   font-size: 1.45rem;
