@@ -35,3 +35,9 @@ npx wrangler login
 Cloudflare 대시보드에서 Git 저장소를 연결해 배포한다면 빌드 명령은 `npm run build:cloudflare`입니다. 별도 시작 명령은 필요하지 않습니다.
 
 Cloudflare 설정은 `wrangler.jsonc`에 있습니다. `/api/*`는 Worker가 처리하고, 그 외 경로는 Vite 정적 빌드 결과를 제공합니다.
+
+## 크레딧
+
+- [iriscatx](https://x.com/iriscatx)
+- [yuraku_urame](https://x.com/yuraku_urame)
+- [AmaeKoromo_MajS](https://amae-koromo.sapk.ch/)
