@@ -68,7 +68,6 @@ describe("scaffold", () => {
       ".hand-preview-panel",
       ".style-coordinates div,\n.style-stat-list div",
       ".style-chart",
-      ".point-summary div",
       ".point-chart",
       ".rank-history",
       ".rank-history-row"

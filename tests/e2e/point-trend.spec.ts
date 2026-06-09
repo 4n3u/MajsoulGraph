@@ -105,14 +105,7 @@ test("generates point trend chart from mocked player records", async ({ page }) 
       });
     })
     .toBe(true);
-  await expect(result.getByText("대국 수")).toBeVisible();
-  await expect(result.getByText("2", { exact: true })).toBeVisible();
-  await expect(result.getByText("현재 pt")).toBeVisible();
-  await expect(result.getByText("650", { exact: true }).first()).toBeVisible();
-  await expect(result.getByText("최고 pt", { exact: true })).toBeVisible();
-  await expect(result.getByText("최저 pt", { exact: true })).toBeVisible();
-  await expect(result.getByText("최고 등급")).toBeVisible();
-  await expect(result.getByText("걸1", { exact: true })).toBeVisible();
+  await expect(result.locator(".point-summary")).toHaveCount(0);
   await expect(result.getByRole("heading", { name: "단위전 이력" })).toBeVisible();
   await expect(result.getByText("걸1 (1 +1 +0 +0)=2판")).toBeVisible();
   await expect(result.getByText("평균 순위 1.500")).toBeVisible();

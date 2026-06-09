@@ -372,29 +372,6 @@ export function PointTrendGraph() {
 
       {timeline && chartOptions ? (
         <section className="point-results" aria-label="포인트 추이 결과">
-          <dl className="point-summary">
-            <div>
-              <dt>대국 수</dt>
-              <dd>{timeline.summary.gameCount}</dd>
-            </div>
-            <div>
-              <dt>현재 pt</dt>
-              <dd>{timeline.summary.finalPoint}</dd>
-            </div>
-            <div>
-              <dt>최고 pt</dt>
-              <dd>{timeline.summary.highPoint}</dd>
-            </div>
-            <div>
-              <dt>최저 pt</dt>
-              <dd>{timeline.summary.lowPoint}</dd>
-            </div>
-            <div>
-              <dt>최고 등급</dt>
-              <dd>{timeline.summary.highestLevelLabel}</dd>
-            </div>
-          </dl>
-
           <EChart className="point-chart" option={chartOptions} ariaLabel="포인트 추이 그래프" />
 
           <section className="rank-history" aria-labelledby="rank-history-title">

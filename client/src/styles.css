@@ -698,8 +698,7 @@ h1 {
 
 .result-meta dt,
 .style-coordinates dt,
-.style-stat-list dt,
-.point-summary dt {
+.style-stat-list dt {
   color: var(--text-muted);
   font-size: 0.78rem;
   font-weight: 700;
@@ -708,8 +707,7 @@ h1 {
 
 .result-meta dd,
 .style-coordinates dd,
-.style-stat-list dd,
-.point-summary dd {
+.style-stat-list dd {
   color: var(--text);
   font-weight: 800;
   line-height: 1.2;
@@ -767,8 +765,7 @@ h1 {
   margin: 0;
 }
 
-.style-coordinates,
-.point-summary {
+.style-coordinates {
   display: grid;
   gap: 10px;
   margin: 0;
@@ -776,12 +773,6 @@ h1 {
 
 .style-coordinates {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.point-summary {
-  border-top: 1px solid var(--border-subtle);
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  padding-top: 14px;
 }
 
 .style-coordinates div,
@@ -804,16 +795,6 @@ h1 {
   margin: 0;
 }
 
-.point-summary div {
-  border-left: 3px solid var(--border-subtle);
-  min-width: 0;
-  padding: 4px 0 4px 12px;
-}
-
-.point-summary dd {
-  font-size: 1.2rem;
-}
-
 .point-chart {
   height: 380px;
   min-width: 0;
@@ -821,7 +802,6 @@ h1 {
 }
 
 .rank-history {
-  border-top: 1px solid var(--border-subtle);
   padding-top: 16px;
 }
 
@@ -896,7 +876,6 @@ h1 {
   .input-row,
   .result-meta,
   .point-form-grid,
-  .point-summary,
   .style-form-grid,
   .style-result-head,
   .style-stat-list {
