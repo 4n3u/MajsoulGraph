@@ -740,7 +740,7 @@ h1 {
   align-items: end;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(190px, 1fr) minmax(112px, auto) minmax(150px, auto) auto;
+  grid-template-columns: minmax(190px, 1fr) 180px 150px auto;
 }
 
 .point-results,
