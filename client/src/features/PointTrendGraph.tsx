@@ -69,7 +69,7 @@ const sameNameOptions: ReadonlyArray<{ label: string; value: SameNameIndex }> = 
 
 const pointCredits = [
   { label: "@iriscatx", href: "https://x.com/iriscatx" },
-  { label: "@AmaeKoromo_MajS", href: "https://5-data.amae-koromo.com/" }
+  { label: "@AmaeKoromo_MajS", href: "https://amae-koromo.sapk.ch/" }
 ] as const;
 
 function formatDate(timestamp: number): string {

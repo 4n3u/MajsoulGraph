@@ -49,7 +49,7 @@ const sameNameOptions: ReadonlyArray<{ label: string; value: SameNameIndex }> = 
 
 const styleCredits = [
   { label: "@yuraku_urame", href: "https://x.com/yuraku_urame" },
-  { label: "@AmaeKoromo_MajS", href: "https://5-data.amae-koromo.com/" }
+  { label: "@AmaeKoromo_MajS", href: "https://amae-koromo.sapk.ch/" }
 ] as const;
 
 async function parseStyleResponse(response: Response): Promise<StyleResponse> {

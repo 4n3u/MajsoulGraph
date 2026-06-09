@@ -29,7 +29,7 @@ test("empty submit shows a Korean validation error", async ({ page }) => {
   );
   await expect(page.getByRole("link", { name: "@AmaeKoromo_MajS" })).toHaveAttribute(
     "href",
-    "https://5-data.amae-koromo.com/"
+    "https://amae-koromo.sapk.ch/"
   );
 
   await page.getByRole("button", { name: "스타일 분석" }).click();
