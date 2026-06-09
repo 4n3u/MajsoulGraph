@@ -13,6 +13,7 @@ type TextFieldProps = Omit<
   fieldClassName?: string;
   inputClassName?: string;
   label: ReactNode;
+  labelAddon?: ReactNode;
   labelClassName?: string;
   onValueChange: (value: string) => void;
 };
@@ -116,13 +117,17 @@ export function TextField({
   fieldClassName,
   inputClassName,
   label,
+  labelAddon,
   labelClassName,
   onValueChange,
   ...inputProps
 }: TextFieldProps) {
   return (
     <Field.Root className={cx("base-field", fieldClassName)}>
-      <Field.Label className={cx("base-field-label", labelClassName)}>{label}</Field.Label>
+      <span className="base-field-label-row">
+        <Field.Label className={cx("base-field-label", labelClassName)}>{label}</Field.Label>
+        {labelAddon}
+      </span>
       <Input
         {...inputProps}
         className={cx("base-input", inputClassName)}

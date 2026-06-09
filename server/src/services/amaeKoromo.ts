@@ -9,12 +9,24 @@ type CacheEntry = {
 
 type UpstreamPlayer = {
   id: number;
+  level?: {
+    delta?: number;
+    id: number;
+    score: number;
+  };
   nickname: string;
   latest_timestamp?: number;
 };
 
 export type PlayerSearchResult = {
   id: number;
+  level:
+    | {
+        delta: number | undefined;
+        id: number;
+        score: number;
+      }
+    | undefined;
   nickname: string;
   latestTimestamp: number | undefined;
 };
@@ -91,6 +103,7 @@ function assertPlayerSearchResult(value: unknown): UpstreamPlayer {
   if (typeof value !== "object" || value === null) throw upstreamShapeError();
   const player = value as Partial<UpstreamPlayer>;
   const id = player.id;
+  const level = player.level;
   const nickname = player.nickname;
   const latestTimestamp = player.latest_timestamp;
 
@@ -105,8 +118,23 @@ function assertPlayerSearchResult(value: unknown): UpstreamPlayer {
     throw upstreamShapeError();
   }
 
+  if (level !== undefined) {
+    if (
+      typeof level !== "object" ||
+      level === null ||
+      typeof level.id !== "number" ||
+      !Number.isSafeInteger(level.id) ||
+      typeof level.score !== "number" ||
+      !Number.isFinite(level.score) ||
+      (level.delta !== undefined && (typeof level.delta !== "number" || !Number.isFinite(level.delta)))
+    ) {
+      throw upstreamShapeError();
+    }
+  }
+
   return {
     id,
+    level,
     nickname,
     latest_timestamp: latestTimestamp
   };
@@ -232,6 +260,13 @@ export async function searchPlayer(mode: Mode, nickname: unknown): Promise<Playe
 
   return players.map((player) => ({
     id: player.id,
+    level: player.level
+      ? {
+          delta: player.level.delta,
+          id: player.level.id,
+          score: player.level.score
+        }
+      : undefined,
     nickname: player.nickname,
     latestTimestamp: player.latest_timestamp
   }));

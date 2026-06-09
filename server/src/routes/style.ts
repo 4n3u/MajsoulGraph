@@ -42,6 +42,20 @@ function parseCount(value: unknown): number | undefined {
   return count;
 }
 
+function parsePositiveSafeInteger(value: unknown, name: string): number | undefined {
+  if (value === undefined || value === "") return undefined;
+  if (typeof value !== "string" || !/^\d+$/.test(value)) {
+    throw new ApiError(400, "bad_input", `${name} must be a positive integer`);
+  }
+
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+    throw new ApiError(400, "bad_input", `${name} must be a positive integer`);
+  }
+
+  return parsed;
+}
+
 function isSafeTimestamp(value: unknown): value is number {
   return typeof value === "number" && Number.isSafeInteger(value);
 }
@@ -85,8 +99,24 @@ styleRouter.get("/", async (request, response, next) => {
 
     const sameName = parseSameName(request.query.sameName);
     const count = parseCount(request.query.count);
-    const players = await searchPlayer("pl4", nickname);
-    const player = players[sameName];
+    const explicitPlayerId = parsePositiveSafeInteger(request.query.playerId, "playerId");
+    const explicitLatestTimestamp = parsePositiveSafeInteger(request.query.latestTimestamp, "latestTimestamp");
+    let player: { id: number; latestTimestamp: number | undefined; nickname: string } | undefined;
+
+    if (explicitPlayerId !== undefined || explicitLatestTimestamp !== undefined) {
+      if (explicitPlayerId === undefined || explicitLatestTimestamp === undefined) {
+        throw new ApiError(400, "bad_input", "playerId and latestTimestamp must be supplied together");
+      }
+
+      player = {
+        id: explicitPlayerId,
+        latestTimestamp: explicitLatestTimestamp,
+        nickname: nickname.trim()
+      };
+    } else {
+      const players = await searchPlayer("pl4", nickname);
+      player = players[sameName];
+    }
 
     if (!player) {
       throw new ApiError(404, "player_not_found", "Player not found");

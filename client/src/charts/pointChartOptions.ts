@@ -1,5 +1,6 @@
 import type { TimelinePoint, TimelineResult } from "@shared/pointTimeline";
 import { gameModeLabels } from "@shared/mahjongModes";
+import { formatLevelName } from "../utils/mahjongLevel";
 import type { ChartOption } from "./EChart";
 
 type SegmentDatum = {
@@ -34,16 +35,6 @@ const modeColors: Record<number, string> = {
   26: "#d94b4b"
 };
 
-const levelNames: Record<number, string> = {
-  1: "초심",
-  2: "작사",
-  3: "작걸",
-  4: "작호",
-  5: "작성",
-  6: "혼천",
-  7: "혼천"
-};
-
 function playedPoints(points: TimelinePoint[]): TimelinePoint[] {
   return points.filter((point) => point.index > 0);
 }
@@ -76,14 +67,6 @@ function formatDate(timestamp?: number): string {
   }).format(new Date(timestamp * 1000));
 }
 
-function formatLevel(level: number): string {
-  const tier = Math.floor(level / 100) % 100;
-  const rank = level % 100;
-  const name = levelNames[tier];
-  if (!name || rank <= 0) return String(level);
-  return `${name}${rank}`;
-}
-
 function isTooltipPointDatum(data: unknown): data is TooltipPointDatum {
   if (typeof data !== "object" || data === null) return false;
   const point = data as Partial<TooltipPointDatum>;
@@ -112,7 +95,7 @@ function tooltipFormatter(params: unknown): string {
   return [
     `${point.index}전`,
     `포인트: ${point.point}`,
-    `등급: ${formatLevel(point.level)}`,
+    `등급: ${formatLevelName(point.level)}`,
     `순위: ${point.rank}위`,
     `탁: ${modeLabel}`,
     `날짜: ${formatDate(point.startTime)}`

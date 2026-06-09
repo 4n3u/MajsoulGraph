@@ -191,6 +191,65 @@ describe("player style API route", () => {
     );
   });
 
+  test("uses explicit selected player metadata without searching again", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date("2026-06-09T00:00:00.000Z"));
+    const upstreamFetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify([
+            makeRecord("newer", 1700000500),
+            makeRecord("oldest", 1700000000)
+          ]),
+          { status: 200, headers: { "content-type": "application/json" } }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(rawStyleStats), {
+          status: 200,
+          headers: { "content-type": "application/json" }
+        })
+      );
+    vi.stubGlobal("fetch", upstreamFetch);
+
+    const response = await getJson(
+      "/api/player-style?nickname=Selected&playerId=456&latestTimestamp=1710000123&count=2"
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ player: { id: 456, nickname: "Selected" } });
+    expect(upstreamFetch).toHaveBeenCalledTimes(2);
+    expect(upstreamFetch).toHaveBeenNthCalledWith(
+      1,
+      "https://5-data.amae-koromo.com/api/v2/pl4/player_records/456/1710000123999/1262304000000?limit=2&mode=16.12.9&descending=true&tag=",
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+    expect(upstreamFetch).toHaveBeenNthCalledWith(
+      2,
+      "https://5-data.amae-koromo.com/api/v2/pl4/player_extended_stats/456/1700000000000/1780963200000?mode=16.12.9&tag=",
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+  });
+
+  test("returns bad_input when explicit player metadata is incomplete", async () => {
+    const upstreamFetch = vi.fn();
+    vi.stubGlobal("fetch", upstreamFetch);
+
+    const response = await getJson("/api/player-style?nickname=Selected&playerId=456");
+
+    expect(response).toEqual({
+      status: 400,
+      body: {
+        error: {
+          code: "bad_input",
+          message: "playerId and latestTimestamp must be supplied together"
+        }
+      }
+    });
+    expect(upstreamFetch).not.toHaveBeenCalled();
+  });
+
   test("bounds count=500 record lookup to one 500-record page and uses the 500th record", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.setSystemTime(new Date("2026-06-09T00:00:00.000Z"));

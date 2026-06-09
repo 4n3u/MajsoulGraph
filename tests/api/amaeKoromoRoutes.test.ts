@@ -84,7 +84,7 @@ describe("Amae-Koromo API routes", () => {
     const upstreamFetch = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify([
-          { id: 123, nickname: "Alice", latest_timestamp: 1710000000 },
+          { id: 123, nickname: "Alice", level: { id: 10403, score: 1298, delta: 137 }, latest_timestamp: 1710000000 },
           { id: 456, nickname: "Alice2", latest_timestamp: 1710000123 }
         ]),
         { status: 200, headers: { "content-type": "application/json" } }
@@ -98,7 +98,12 @@ describe("Amae-Koromo API routes", () => {
       status: 200,
       body: {
         players: [
-          { id: 123, nickname: "Alice", latestTimestamp: 1710000000 },
+          {
+            id: 123,
+            level: { id: 10403, score: 1298, delta: 137 },
+            nickname: "Alice",
+            latestTimestamp: 1710000000
+          },
           { id: 456, nickname: "Alice2", latestTimestamp: 1710000123 }
         ]
       }

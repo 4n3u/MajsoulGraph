@@ -10,10 +10,10 @@ import { EChart } from "../charts/EChart";
 import { buildPointChartOptions } from "../charts/pointChartOptions";
 import { Button, ProgressBar, SelectField, TextField } from "../components/BaseControls";
 import { useErrorToast } from "../components/ErrorToasts";
+import { PlayerAccountPicker, type PlayerAccount } from "../components/PlayerAccountPicker";
 import { ToolCredit } from "../components/ToolCredit";
 
 type ModeLabel = "사마" | "삼마";
-type SameNameIndex = "0" | "1" | "2";
 
 type ModeConfig = {
   apiMode: "pl4" | "pl3";
@@ -24,6 +24,11 @@ type ModeConfig = {
 
 type SearchPlayerResult = {
   id: number;
+  level?: {
+    delta?: number;
+    id: number;
+    score: number;
+  };
   nickname: string;
   latestTimestamp?: number;
 };
@@ -59,12 +64,6 @@ const modeConfig: Record<ModeLabel, ModeConfig> = {
 const modeOptions: ReadonlyArray<{ label: string; value: ModeLabel }> = [
   { label: "사마", value: "사마" },
   { label: "삼마", value: "삼마" }
-];
-
-const sameNameOptions: ReadonlyArray<{ label: string; value: SameNameIndex }> = [
-  { label: "0", value: "0" },
-  { label: "1", value: "1" },
-  { label: "2", value: "2" }
 ];
 
 const pointCredits = [
@@ -185,7 +184,7 @@ async function buildPointTimelineWithProgress(
 export function PointTrendGraph() {
   const [nickname, setNickname] = useState("");
   const [mode, setMode] = useState<ModeLabel>("사마");
-  const [sameName, setSameName] = useState<SameNameIndex>("0");
+  const [playerCandidates, setPlayerCandidates] = useState<PlayerAccount[]>([]);
   const [progress, setProgress] = useState<LoadingProgress | null>(null);
   const [timeline, setTimeline] = useState<TimelineResult | null>(null);
   const requestIdRef = useRef(0);
@@ -204,58 +203,23 @@ export function PointTrendGraph() {
     return timeline ? buildPointChartOptions(timeline) : null;
   }, [timeline]);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const trimmedNickname = nickname.trim();
-    setTimeline(null);
-
-    if (!trimmedNickname) {
-      setProgress(null);
-      showError("닉네임을 입력해주세요.");
-      return;
-    }
-
-    const config = modeConfig[mode];
-    const sameNameIndex = Number(sameName);
+  async function analyzePlayer(player: PlayerAccount, config: ModeConfig) {
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
     abortControllerRef.current?.abort();
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
-
     const isCurrentRequest = () => requestIdRef.current === requestId && !abortController.signal.aborted;
 
     try {
-      setProgress({ label: "닉네임 검색 중", value: null });
-      const searchParams = new URLSearchParams({
-        mode: config.apiMode,
-        nickname: trimmedNickname
-      });
-      const searchBody = await parseJsonResponse<SearchResponse>(
-        await fetchOrThrow(
-          `/api/search-player?${searchParams.toString()}`,
-          "닉네임 검색에 실패했습니다.",
-          abortController.signal
-        ),
-        "닉네임 검색에 실패했습니다."
-      );
-
-      if (!isCurrentRequest()) return;
-
-      const player = searchBody.players?.[sameNameIndex];
-
-      if (!player) {
-        throw new Error("선택한 동일 닉네임 구분의 플레이어를 찾을 수 없습니다.");
-      }
+      setTimeline(null);
+      setPlayerCandidates([]);
 
       if (typeof player.latestTimestamp !== "number") {
         throw new Error("최근 대국 시간이 없는 플레이어입니다.");
       }
 
-      if (isCurrentRequest()) {
-        setProgress({ label: "패보를 불러오는 중", value: null });
-      }
+      setProgress({ label: "패보를 불러오는 중", value: null });
       const recordsParams = new URLSearchParams({
         mode: config.apiMode,
         playerId: String(player.id),
@@ -277,9 +241,7 @@ export function PointTrendGraph() {
         throw new Error("분석할 대국 기록이 없습니다.");
       }
 
-      if (isCurrentRequest()) {
-        setProgress({ label: "패보 분석 준비 중", value: null });
-      }
+      setProgress({ label: "패보 분석 준비 중", value: null });
       await nextFrame();
       if (!isCurrentRequest()) return;
 
@@ -307,6 +269,76 @@ export function PointTrendGraph() {
           abortControllerRef.current = null;
         }
       }
+    } catch (analysisError) {
+      if (isCurrentRequest()) {
+        setTimeline(null);
+        setProgress(null);
+        showError(analysisError instanceof Error ? analysisError.message : "포인트 추이 그래프를 생성할 수 없습니다.");
+        if (abortControllerRef.current === abortController) {
+          abortControllerRef.current = null;
+        }
+      }
+    }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const trimmedNickname = nickname.trim();
+    setTimeline(null);
+    setPlayerCandidates([]);
+
+    if (!trimmedNickname) {
+      setProgress(null);
+      showError("닉네임을 입력해주세요.");
+      return;
+    }
+
+    const config = modeConfig[mode];
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    abortControllerRef.current?.abort();
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    const isCurrentRequest = () => requestIdRef.current === requestId && !abortController.signal.aborted;
+
+    try {
+      setProgress({ label: "닉네임 검색 중", value: null });
+      const searchParams = new URLSearchParams({
+        mode: config.apiMode,
+        nickname: trimmedNickname
+      });
+      const searchBody = await parseJsonResponse<SearchResponse>(
+        await fetchOrThrow(
+          `/api/search-player?${searchParams.toString()}`,
+          "닉네임 검색에 실패했습니다.",
+          abortController.signal
+        ),
+        "닉네임 검색에 실패했습니다."
+      );
+
+      if (!isCurrentRequest()) return;
+
+      const players = searchBody.players ?? [];
+
+      if (players.length === 0) {
+        throw new Error("플레이어를 찾을 수 없습니다.");
+      }
+
+      if (players.length > 1) {
+        setProgress(null);
+        setPlayerCandidates(players);
+        if (abortControllerRef.current === abortController) {
+          abortControllerRef.current = null;
+        }
+        return;
+      }
+
+      if (abortControllerRef.current === abortController) {
+        abortControllerRef.current = null;
+      }
+      await analyzePlayer(players[0]!, config);
     } catch (submitError) {
       if (isCurrentRequest()) {
         setTimeline(null);
@@ -331,7 +363,10 @@ export function PointTrendGraph() {
             id="point-nickname-input"
             label="작혼 닉네임"
             name="nickname"
-            onValueChange={setNickname}
+            onValueChange={(value) => {
+              setNickname(value);
+              setPlayerCandidates([]);
+            }}
             disabled={isLoading}
             placeholder="닉네임"
             type="text"
@@ -341,25 +376,27 @@ export function PointTrendGraph() {
             id="point-mode-select"
             label="모드"
             name="mode"
-            onValueChange={setMode}
+            onValueChange={(value) => {
+              setMode(value);
+              setPlayerCandidates([]);
+            }}
             options={modeOptions}
             disabled={isLoading}
             value={mode}
-          />
-          <SelectField
-            id="point-same-name-select"
-            label="동일 닉네임 구분"
-            name="same-name"
-            onValueChange={setSameName}
-            options={sameNameOptions}
-            disabled={isLoading}
-            value={sameName}
           />
           <Button className="primary-button" type="submit" disabled={isLoading}>
             그래프 생성
           </Button>
         </div>
       </form>
+
+      <PlayerAccountPicker
+        disabled={isLoading}
+        onSelect={(player) => {
+          void analyzePlayer(player, modeConfig[mode]);
+        }}
+        players={playerCandidates}
+      />
 
       {progress ? (
         <ProgressBar label={progress.label} value={progress.value} />

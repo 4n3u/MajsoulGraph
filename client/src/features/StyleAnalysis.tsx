@@ -1,12 +1,12 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { Popover } from "@base-ui/react/popover";
 import type { ProcessedStyleStats, StyleIntensity, StyleLabel } from "@shared/styleAnalysis";
 import { EChart } from "../charts/EChart";
 import { buildStyleChartOptions } from "../charts/styleChartOptions";
-import { Button, ProgressBar, SelectField, TextField } from "../components/BaseControls";
+import { Button, ProgressBar, TextField } from "../components/BaseControls";
 import { useErrorToast } from "../components/ErrorToasts";
+import { PlayerAccountPicker, type PlayerAccount } from "../components/PlayerAccountPicker";
 import { ToolCredit } from "../components/ToolCredit";
-
-type SameNameIndex = "0" | "1" | "2";
 
 type StyleResponse = {
   player: {
@@ -26,6 +26,10 @@ type StyleResponse = {
   };
 };
 
+type SearchResponse = {
+  players?: PlayerAccount[];
+};
+
 const statLabels: Array<{ key: keyof ProcessedStyleStats; label: string }> = [
   { key: "horyuRate", label: "화료율" },
   { key: "houjuRate", label: "방총율" },
@@ -39,12 +43,6 @@ const statLabels: Array<{ key: keyof ProcessedStyleStats; label: string }> = [
   { key: "riichiTurn", label: "리치순" },
   { key: "riichiFirstRate", label: "리치 선제율" },
   { key: "riichiChaseRate", label: "리치 추격률" }
-];
-
-const sameNameOptions: ReadonlyArray<{ label: string; value: SameNameIndex }> = [
-  { label: "0", value: "0" },
-  { label: "1", value: "1" },
-  { label: "2", value: "2" }
 ];
 
 const styleCredits = [
@@ -63,6 +61,22 @@ async function parseStyleResponse(response: Response): Promise<StyleResponse> {
 
   if (!response.ok || !body) {
     throw new Error("스타일 분석에 실패했습니다.");
+  }
+
+  return body;
+}
+
+async function parseSearchResponse(response: Response): Promise<SearchResponse> {
+  let body: SearchResponse | null = null;
+
+  try {
+    body = (await response.json()) as SearchResponse;
+  } catch {
+    body = null;
+  }
+
+  if (!response.ok || !body) {
+    throw new Error("닉네임 검색에 실패했습니다.");
   }
 
   return body;
@@ -88,10 +102,31 @@ function formatStat(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }
 
+function CountHelpPopover() {
+  return (
+    <Popover.Root>
+      <Popover.Trigger aria-label="대국 수 설명" className="field-help-trigger">
+        ?
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Positioner className="base-popover-positioner" sideOffset={6}>
+          <Popover.Popup className="base-popover">
+            <Popover.Arrow className="base-popover-arrow" />
+            <Popover.Title className="base-popover-title">대국 수</Popover.Title>
+            <Popover.Description className="base-popover-description">
+              숫자를 입력하면 최근 해당 대국 수 범위로 스타일 통계를 분석합니다. 비워두면 전체 기록 기준입니다.
+            </Popover.Description>
+          </Popover.Popup>
+        </Popover.Positioner>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
+
 export function StyleAnalysis() {
   const [nickname, setNickname] = useState("");
   const [count, setCount] = useState("");
-  const [sameName, setSameName] = useState<SameNameIndex>("0");
+  const [playerCandidates, setPlayerCandidates] = useState<PlayerAccount[]>([]);
   const [status, setStatus] = useState("");
   const [result, setResult] = useState<StyleResponse | null>(null);
   const requestIdRef = useRef(0);
@@ -116,26 +151,17 @@ export function StyleAnalysis() {
       : null;
   }, [result]);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const trimmedNickname = nickname.trim();
+  function validateCount(): string {
     const trimmedCount = count.trim();
-    setResult(null);
-
-    if (!trimmedNickname) {
-      setStatus("");
-      showError("닉네임을 입력해주세요.");
-      return;
-    }
-
     const parsedCount = Number(trimmedCount);
     if (trimmedCount && (!/^\d+$/.test(trimmedCount) || !Number.isSafeInteger(parsedCount) || parsedCount <= 0)) {
-      setStatus("");
-      showError("대국 수는 양의 정수로 입력해주세요.");
-      return;
+      throw new Error("대국 수는 양의 정수로 입력해주세요.");
     }
+    return trimmedCount;
+  }
 
+  async function analyzePlayer(player: PlayerAccount) {
+    const trimmedCount = validateCount();
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
     abortControllerRef.current?.abort();
@@ -144,10 +170,18 @@ export function StyleAnalysis() {
     const isCurrentRequest = () => requestIdRef.current === requestId && !abortController.signal.aborted;
 
     try {
+      setResult(null);
+      setPlayerCandidates([]);
+
+      if (typeof player.latestTimestamp !== "number") {
+        throw new Error("최근 대국 시간이 없는 플레이어입니다.");
+      }
+
       setStatus("loading");
       const params = new URLSearchParams({
-        nickname: trimmedNickname,
-        sameName
+        latestTimestamp: String(player.latestTimestamp),
+        nickname: player.nickname,
+        playerId: String(player.id)
       });
       if (trimmedCount) {
         params.set("count", trimmedCount);
@@ -164,6 +198,76 @@ export function StyleAnalysis() {
           abortControllerRef.current = null;
         }
       }
+    } catch (analysisError) {
+      if (isCurrentRequest()) {
+        setResult(null);
+        setStatus("");
+        showError(analysisError instanceof Error ? analysisError.message : "스타일 분석에 실패했습니다.");
+        if (abortControllerRef.current === abortController) {
+          abortControllerRef.current = null;
+        }
+      }
+    }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const trimmedNickname = nickname.trim();
+    setResult(null);
+    setPlayerCandidates([]);
+
+    if (!trimmedNickname) {
+      setStatus("");
+      showError("닉네임을 입력해주세요.");
+      return;
+    }
+
+    try {
+      validateCount();
+    } catch (validationError) {
+      setStatus("");
+      showError(validationError instanceof Error ? validationError.message : "대국 수는 양의 정수로 입력해주세요.");
+      return;
+    }
+
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    abortControllerRef.current?.abort();
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+    const isCurrentRequest = () => requestIdRef.current === requestId && !abortController.signal.aborted;
+
+    try {
+      setStatus("loading");
+      const params = new URLSearchParams({ mode: "pl4", nickname: trimmedNickname });
+
+      const body = await parseSearchResponse(
+        await fetchStyle(`/api/search-player?${params.toString()}`, abortController.signal)
+      );
+
+      if (!isCurrentRequest()) return;
+
+      const players = body.players ?? [];
+      if (players.length === 0) {
+        throw new Error("플레이어를 찾을 수 없습니다.");
+      }
+
+      if (players.length > 1) {
+        setStatus("");
+        setPlayerCandidates(players);
+        if (abortControllerRef.current === abortController) {
+          abortControllerRef.current = null;
+        }
+        return;
+      }
+
+      if (isCurrentRequest()) {
+        if (abortControllerRef.current === abortController) {
+          abortControllerRef.current = null;
+        }
+      }
+      await analyzePlayer(players[0]!);
     } catch (submitError) {
       if (isCurrentRequest()) {
         setResult(null);
@@ -188,7 +292,10 @@ export function StyleAnalysis() {
             id="style-nickname-input"
             label="작혼 닉네임"
             name="nickname"
-            onValueChange={setNickname}
+            onValueChange={(value) => {
+              setNickname(value);
+              setPlayerCandidates([]);
+            }}
             disabled={isLoading}
             placeholder="닉네임"
             type="text"
@@ -197,8 +304,12 @@ export function StyleAnalysis() {
           <TextField
             id="style-count-input"
             label="대국 수"
+            labelAddon={<CountHelpPopover />}
             name="count"
-            onValueChange={setCount}
+            onValueChange={(value) => {
+              setCount(value);
+              setPlayerCandidates([]);
+            }}
             disabled={isLoading}
             inputMode="numeric"
             min="1"
@@ -207,20 +318,19 @@ export function StyleAnalysis() {
             type="number"
             value={count}
           />
-          <SelectField
-            id="style-same-name-select"
-            label="동일 닉네임 구분"
-            name="same-name"
-            onValueChange={setSameName}
-            options={sameNameOptions}
-            disabled={isLoading}
-            value={sameName}
-          />
           <Button className="primary-button" type="submit" disabled={isLoading}>
             스타일 분석
           </Button>
         </div>
       </form>
+
+      <PlayerAccountPicker
+        disabled={isLoading}
+        onSelect={(player) => {
+          void analyzePlayer(player);
+        }}
+        players={playerCandidates}
+      />
 
       {status ? (
         <ProgressBar label="스타일 분석 진행 중" />

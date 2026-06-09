@@ -1,13 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
 
-async function chooseSelectOption(page: Page, label: string, option: string) {
-  await page
-    .locator(".base-select-field", { hasText: label })
-    .locator(".base-select-trigger")
-    .click();
-  await page.getByRole("option", { name: option, exact: true }).click();
-}
-
 async function expectErrorToast(page: Page, message: string) {
   const toast = page.locator(".base-toast");
 
@@ -42,10 +34,11 @@ async function expectStyleStatGrid(page: Page, result: ReturnType<Page["getByLab
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/style");
   const styleTab = page.getByRole("tab", { name: "사마 스타일 분석" });
   await expect(styleTab).toBeVisible();
-  await styleTab.click();
+  await expect(styleTab).toHaveAttribute("aria-selected", "true");
+  await expect(page).toHaveURL(/\/style$/);
 });
 
 test("empty submit shows a Korean validation error", async ({ page }) => {
@@ -57,6 +50,10 @@ test("empty submit shows a Korean validation error", async ({ page }) => {
     "href",
     "https://amae-koromo.sapk.ch/"
   );
+  await expect(page.getByText("동일 닉네임 구분")).toHaveCount(0);
+  await page.getByRole("button", { name: "대국 수 설명" }).click();
+  await expect(page.getByText("최근 해당 대국 수 범위")).toBeVisible();
+  await page.keyboard.press("Escape");
 
   await page.getByRole("button", { name: "스타일 분석" }).click();
 
@@ -75,7 +72,7 @@ test("invalid count shows a Korean validation error without calling the API", as
   });
 
   await page.getByLabel("작혼 닉네임").fill("Tester");
-  await page.getByLabel("대국 수").fill("0");
+  await page.getByRole("spinbutton", { name: "대국 수", exact: true }).fill("0");
   await page.getByRole("button", { name: "스타일 분석" }).click();
 
   await expectErrorToast(page, "대국 수는 양의 정수로 입력해주세요.");
@@ -84,6 +81,22 @@ test("invalid count shows a Korean validation error without calling the API", as
 
 test("renders style analysis result from mocked API response", async ({ page }) => {
   const requestedUrls: string[] = [];
+
+  await page.route("**/api/search-player**", async (route) => {
+    const url = new URL(route.request().url());
+    requestedUrls.push(url.toString());
+
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        players: [
+          { id: 123, nickname: "Tester", level: { id: 10301, score: 645 }, latestTimestamp: 1700000000 },
+          { id: 456, nickname: "Tester", level: { id: 10403, score: 1298 }, latestTimestamp: 1710000123 }
+        ]
+      })
+    });
+  });
 
   await page.route("**/api/player-style**", async (route) => {
     const url = new URL(route.request().url());
@@ -120,9 +133,14 @@ test("renders style analysis result from mocked API response", async ({ page }) 
   });
 
   await page.getByLabel("작혼 닉네임").fill("Tester");
-  await page.getByLabel("대국 수").fill("50");
-  await chooseSelectOption(page, "동일 닉네임 구분", "1");
+  await page.getByRole("spinbutton", { name: "대국 수", exact: true }).fill("50");
   await page.getByRole("button", { name: "스타일 분석" }).click();
+
+  const accountPicker = page.getByLabel("계정 선택");
+  await expect(accountPicker).toBeVisible();
+  await expect(accountPicker.getByText("작걸1 645pt")).toBeVisible();
+  await expect(accountPicker.getByText("작호3 1298pt")).toBeVisible();
+  await accountPicker.locator(".account-option", { hasText: "ID 456" }).click();
 
   const result = page.getByLabel("스타일 분석 결과");
   await expect(result.getByText("중증 멘젠 고득점형(12.35,-8.77)")).toBeVisible();
@@ -164,9 +182,12 @@ test("renders style analysis result from mocked API response", async ({ page }) 
     })
     .toBe(true);
 
-  expect(requestedUrls).toHaveLength(1);
-  expect(requestedUrls[0]).toContain("/api/player-style?");
+  expect(requestedUrls).toHaveLength(2);
+  expect(requestedUrls[0]).toContain("/api/search-player?");
   expect(requestedUrls[0]).toContain("nickname=Tester");
-  expect(requestedUrls[0]).toContain("sameName=1");
-  expect(requestedUrls[0]).toContain("count=50");
+  expect(requestedUrls[1]).toContain("/api/player-style?");
+  expect(requestedUrls[1]).toContain("nickname=Tester");
+  expect(requestedUrls[1]).toContain("playerId=456");
+  expect(requestedUrls[1]).toContain("latestTimestamp=1710000123");
+  expect(requestedUrls[1]).toContain("count=50");
 });

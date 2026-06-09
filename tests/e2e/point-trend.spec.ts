@@ -12,6 +12,7 @@ test.beforeEach(async ({ page }) => {
   const pointsTab = page.getByRole("tab", { name: "포인트 추이 그래프" });
   await expect(pointsTab).toBeVisible();
   await pointsTab.click();
+  await expect(page).toHaveURL(/\/graph$/);
 });
 
 test("empty submit shows a Korean validation error", async ({ page }) => {
@@ -20,6 +21,7 @@ test("empty submit shows a Korean validation error", async ({ page }) => {
     "href",
     "https://amae-koromo.sapk.ch/"
   );
+  await expect(page.getByText("동일 닉네임 구분")).toHaveCount(0);
 
   await page.getByRole("button", { name: "그래프 생성" }).click();
 
@@ -38,8 +40,8 @@ test("generates point trend chart from mocked player records", async ({ page }) 
       contentType: "application/json",
       body: JSON.stringify({
         players: [
-          { id: 1001, nickname: "Tester", latestTimestamp: 1700000500 },
-          { id: 2002, nickname: "Tester", latestTimestamp: 1700000400 }
+          { id: 1001, nickname: "Tester", level: { id: 10301, score: 645 }, latestTimestamp: 1700000500 },
+          { id: 2002, nickname: "Tester", level: { id: 10403, score: 1298 }, latestTimestamp: 1700000400 }
         ]
       })
     });
@@ -83,6 +85,12 @@ test("generates point trend chart from mocked player records", async ({ page }) 
 
   await page.getByLabel("작혼 닉네임").fill("Tester");
   await page.getByRole("button", { name: "그래프 생성" }).click();
+
+  const accountPicker = page.getByLabel("계정 선택");
+  await expect(accountPicker).toBeVisible();
+  await expect(accountPicker.getByText("작걸1 645pt")).toBeVisible();
+  await expect(accountPicker.getByText("작호3 1298pt")).toBeVisible();
+  await accountPicker.locator(".account-option", { hasText: "ID 1001" }).click();
 
   await expect(page.getByRole("progressbar")).toBeVisible();
   const result = page.getByLabel("포인트 추이 결과");
@@ -252,9 +260,6 @@ test("locks point form while a request is in flight", async ({ page }) => {
   await expect(page.getByLabel("작혼 닉네임")).toBeDisabled();
   await expect(
     page.locator(".base-select-field", { hasText: "모드" }).locator(".base-select-trigger")
-  ).toBeDisabled();
-  await expect(
-    page.locator(".base-select-field", { hasText: "동일 닉네임 구분" }).locator(".base-select-trigger")
   ).toBeDisabled();
   await expect(page.getByRole("button", { name: "그래프 생성" })).toBeDisabled();
 
