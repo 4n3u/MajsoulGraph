@@ -1,4 +1,4 @@
-import { ApiError } from "../routes/errors";
+import { ApiError } from "../api/errors";
 
 type Mode = "pl4" | "pl3";
 
