@@ -108,8 +108,8 @@ export function buildPointChartOptions(timeline: TimelineResult): ChartOption {
   return {
     animation: false,
     grid: {
-      left: 52,
-      right: 24,
+      left: 8,
+      right: 16,
       top: 24,
       bottom: 72,
       containLabel: true
@@ -130,7 +130,10 @@ export function buildPointChartOptions(timeline: TimelineResult): ChartOption {
       name: "포인트",
       min: 0,
       max: yMax,
-      interval: 1000
+      interval: 1000,
+      axisLabel: {
+        margin: 6
+      }
     },
     dataZoom: [
       {
