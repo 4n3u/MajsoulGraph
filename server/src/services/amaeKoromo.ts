@@ -171,8 +171,12 @@ function assertNumericRecord(value: unknown): Record<string, number> {
   const result: Record<string, number> = {};
 
   for (const [key, rawValue] of Object.entries(value)) {
-    result[key] = assertFiniteNumber(rawValue);
+    if (typeof rawValue === "number") {
+      result[key] = assertFiniteNumber(rawValue);
+    }
   }
+
+  if (Object.keys(result).length === 0) throw upstreamShapeError();
 
   return result;
 }

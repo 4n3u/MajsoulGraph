@@ -56,7 +56,13 @@ const rawStyleStats = {
   "流听率": 0.47,
   "立直巡目": 9.7,
   "先制率": 0.84,
-  "追立率": 0.16
+  "追立率": 0.16,
+  "最近大铳": {
+    id: "220405-71209b83-6e44-484c-b528-f28a9f14cf89",
+    start_time: 1649134265,
+    fans: [{ id: 31, label: "宝牌", count: 6 }]
+  },
+  played_modes: [9]
 };
 
 function makeRecord(uuid: string, startTime: number) {
@@ -356,6 +362,36 @@ describe("player style API route", () => {
         error: {
           code: "player_not_found",
           message: "Player latest timestamp not found"
+        }
+      }
+    });
+  });
+
+  test("returns upstream_error when extended stats contains no numeric stats", async () => {
+    const upstreamFetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify([{ id: 123, nickname: "Tester", latest_timestamp: 1710000000 }]), {
+          status: 200,
+          headers: { "content-type": "application/json" }
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ played_modes: [9], "最近大铳": { id: "game" } }), {
+          status: 200,
+          headers: { "content-type": "application/json" }
+        })
+      );
+    vi.stubGlobal("fetch", upstreamFetch);
+
+    const response = await getJson("/api/player-style?nickname=Tester");
+
+    expect(response).toEqual({
+      status: 502,
+      body: {
+        error: {
+          code: "upstream_error",
+          message: "Amae-Koromo request failed"
         }
       }
     });
