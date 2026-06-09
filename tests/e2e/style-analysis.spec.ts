@@ -99,11 +99,10 @@ test("renders style analysis result from mocked API response", async ({ page }) 
   await page.getByRole("button", { name: "스타일 분석" }).click();
 
   const result = page.getByLabel("스타일 분석 결과");
-  await expect(result.getByText("당신은 중증 멘젠 고득점형입니다.")).toBeVisible();
-  await expect(result.getByText("X 좌표")).toBeVisible();
-  await expect(result.getByText("12.35")).toBeVisible();
-  await expect(result.getByText("Y 좌표")).toBeVisible();
-  await expect(result.getByText("-8.77")).toBeVisible();
+  await expect(result.getByText("중증 멘젠 고득점형(12.35,-8.77)")).toBeVisible();
+  await expect(result.getByText("당신은")).toHaveCount(0);
+  await expect(result.getByText("X 좌표")).toHaveCount(0);
+  await expect(result.getByText("Y 좌표")).toHaveCount(0);
   await expect(result.getByText("화료율")).toBeVisible();
   await expect(result.getByText("0.32")).toBeVisible();
 

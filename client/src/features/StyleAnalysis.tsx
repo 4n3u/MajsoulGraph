@@ -80,6 +80,10 @@ function formatPoint(value: number): string {
   return value.toFixed(2);
 }
 
+function formatStyleSummary(result: StyleResponse): string {
+  return `${result.analysis.intensity} ${result.analysis.style}(${formatPoint(result.point.x)},${formatPoint(result.point.y)})`;
+}
+
 function formatStat(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }
@@ -225,19 +229,7 @@ export function StyleAnalysis() {
       {result && chartOptions ? (
         <section className="style-results" aria-label="스타일 분석 결과">
           <div className="style-result-head">
-            <p className="style-verdict">
-              당신은 {result.analysis.intensity} {result.analysis.style}입니다.
-            </p>
-            <dl className="style-coordinates">
-              <div>
-                <dt>X 좌표</dt>
-                <dd>{formatPoint(result.point.x)}</dd>
-              </div>
-              <div>
-                <dt>Y 좌표</dt>
-                <dd>{formatPoint(result.point.y)}</dd>
-              </div>
-            </dl>
+            <p className="style-verdict">{formatStyleSummary(result)}</p>
           </div>
 
           <EChart className="style-chart" option={chartOptions} ariaLabel="스타일 분석 산점도" />
