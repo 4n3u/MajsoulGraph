@@ -896,9 +896,12 @@ h1 {
   .input-row,
   .result-meta,
   .point-form-grid,
-  .style-form-grid,
-  .style-stat-list {
+  .style-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .style-stat-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .primary-button,

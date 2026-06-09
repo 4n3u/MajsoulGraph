@@ -15,6 +15,32 @@ async function expectErrorToast(page: Page, message: string) {
   await expect(toast).toContainText(message);
 }
 
+async function expectStyleStatGrid(page: Page, result: ReturnType<Page["getByLabel"]>) {
+  const statItems = result.locator(".style-stat-list > div");
+  await expect(statItems).toHaveCount(12);
+
+  const first = await statItems.nth(0).boundingBox();
+  const second = await statItems.nth(1).boundingBox();
+  const third = await statItems.nth(2).boundingBox();
+
+  if (!first || !second || !third) {
+    throw new Error("Style stat item bounds were not available");
+  }
+
+  const viewport = page.viewportSize();
+  if (viewport && viewport.width <= 768) {
+    expect(Math.abs(first.y - second.y)).toBeLessThan(2);
+    expect(third.y).toBeGreaterThan(first.y + first.height * 0.5);
+    return;
+  }
+
+  const fourth = await statItems.nth(3).boundingBox();
+  if (!fourth) {
+    throw new Error("Style stat item bounds were not available");
+  }
+  expect(Math.abs(first.y - fourth.y)).toBeLessThan(2);
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
   const styleTab = page.getByRole("tab", { name: "사마 스타일 분석" });
@@ -105,6 +131,7 @@ test("renders style analysis result from mocked API response", async ({ page }) 
   await expect(result.getByText("Y 좌표")).toHaveCount(0);
   await expect(result.getByText("화료율")).toBeVisible();
   await expect(result.getByText("0.32")).toBeVisible();
+  await expectStyleStatGrid(page, result);
 
   const chart = result.getByRole("img", { name: "스타일 분석 산점도" });
   await expect(chart).toBeVisible();
