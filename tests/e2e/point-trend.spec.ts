@@ -122,7 +122,7 @@ test("generates point trend chart from mocked player records", async ({ page }) 
   expect(chartBox.width).toBeGreaterThan(resultBox.width);
   await page.mouse.move(chartBox.x + chartBox.width * 0.5, chartBox.y + chartBox.height * 0.47);
   await expect.poll(async () => page.locator("body").textContent()).toContain("포인트: 645");
-  await expect.poll(async () => page.locator("body").textContent()).toContain("등급: 10301");
+  await expect.poll(async () => page.locator("body").textContent()).toContain("등급: 작걸1");
   await expect.poll(async () => page.locator("body").textContent()).toContain("순위: 1위");
   await expect.poll(async () => page.locator("body").textContent()).toContain("탁: 4왕반");
   await expect.poll(async () => page.locator("body").textContent()).not.toContain("undefined");

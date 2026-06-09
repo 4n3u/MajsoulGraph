@@ -91,11 +91,44 @@ describe("point chart options", () => {
 
     expect(html).toContain("1전");
     expect(html).toContain("포인트: 645");
-    expect(html).toContain("등급: 10301");
+    expect(html).toContain("등급: 작걸1");
     expect(html).toContain("순위: 1위");
     expect(html).toContain("탁: 4왕반");
     expect(html).not.toContain("undefined");
     expect(html).not.toContain("날짜: -");
+  });
+
+  it("formats tooltip levels as Korean rank labels", () => {
+    const timeline = buildPointTimeline({
+      recordsDescending: [
+        {
+          modeId: 16,
+          startTime: 1000,
+          endTime: 2000,
+          players: [{ accountId: 1, score: 45000, level: 10301, gradingScore: 45 }]
+        }
+      ],
+      targetAccountId: 1,
+      initialLevel: 10301,
+      historyLevel: 10203
+    });
+    const options = buildPointChartOptions(timeline);
+    const tooltip = options.tooltip as { formatter?: (params: unknown) => string };
+    const series = (Array.isArray(options.series) ? options.series : [options.series]) as TestSeries[];
+    const pointSeries = series.find((item) => item.name === "포인트");
+    const pointDatum = pointSeries?.data?.[1];
+
+    const examples = [
+      [10403, "작호3"],
+      [10503, "작성3"],
+      [10703, "혼천3"]
+    ] as const;
+
+    for (const [level, label] of examples) {
+      const html = tooltip.formatter?.([{ seriesName: "포인트", data: { ...(pointDatum as object), level } }]);
+
+      expect(html).toContain(`등급: ${label}`);
+    }
   });
 });
 
