@@ -4,6 +4,7 @@ import { EChart } from "../charts/EChart";
 import { buildStyleChartOptions } from "../charts/styleChartOptions";
 import { Button, ProgressBar, SelectField, TextField } from "../components/BaseControls";
 import { useErrorToast } from "../components/ErrorToasts";
+import { ToolCredit } from "../components/ToolCredit";
 
 type SameNameIndex = "0" | "1" | "2";
 
@@ -45,6 +46,11 @@ const sameNameOptions: ReadonlyArray<{ label: string; value: SameNameIndex }> = 
   { label: "1", value: "1" },
   { label: "2", value: "2" }
 ];
+
+const styleCredits = [
+  { label: "@yuraku_urame", href: "https://x.com/yuraku_urame" },
+  { label: "@AmaeKoromo_MajS", href: "https://5-data.amae-koromo.com/" }
+] as const;
 
 async function parseStyleResponse(response: Response): Promise<StyleResponse> {
   let body: StyleResponse | null = null;
@@ -246,6 +252,8 @@ export function StyleAnalysis() {
           </dl>
         </section>
       ) : null}
+
+      <ToolCredit links={styleCredits} />
     </section>
   );
 }

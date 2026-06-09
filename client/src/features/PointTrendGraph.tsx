@@ -10,6 +10,7 @@ import { EChart } from "../charts/EChart";
 import { buildPointChartOptions } from "../charts/pointChartOptions";
 import { Button, ProgressBar, SelectField, TextField } from "../components/BaseControls";
 import { useErrorToast } from "../components/ErrorToasts";
+import { ToolCredit } from "../components/ToolCredit";
 
 type ModeLabel = "사마" | "삼마";
 type SameNameIndex = "0" | "1" | "2";
@@ -65,6 +66,11 @@ const sameNameOptions: ReadonlyArray<{ label: string; value: SameNameIndex }> = 
   { label: "1", value: "1" },
   { label: "2", value: "2" }
 ];
+
+const pointCredits = [
+  { label: "@iriscatx", href: "https://x.com/iriscatx" },
+  { label: "@AmaeKoromo_MajS", href: "https://5-data.amae-koromo.com/" }
+] as const;
 
 function formatDate(timestamp: number): string {
   return new Intl.DateTimeFormat("ko-KR", {
@@ -384,6 +390,8 @@ export function PointTrendGraph() {
           </section>
         </section>
       ) : null}
+
+      <ToolCredit links={pointCredits} />
     </section>
   );
 }

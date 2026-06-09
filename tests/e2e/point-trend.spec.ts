@@ -15,6 +15,12 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("empty submit shows a Korean validation error", async ({ page }) => {
+  await expect(page.getByRole("link", { name: "@iriscatx" })).toHaveAttribute("href", "https://x.com/iriscatx");
+  await expect(page.getByRole("link", { name: "@AmaeKoromo_MajS" })).toHaveAttribute(
+    "href",
+    "https://5-data.amae-koromo.com/"
+  );
+
   await page.getByRole("button", { name: "그래프 생성" }).click();
 
   await expectErrorToast(page, "닉네임을 입력해주세요.");

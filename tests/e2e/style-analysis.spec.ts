@@ -23,6 +23,15 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("empty submit shows a Korean validation error", async ({ page }) => {
+  await expect(page.getByRole("link", { name: "@yuraku_urame" })).toHaveAttribute(
+    "href",
+    "https://x.com/yuraku_urame"
+  );
+  await expect(page.getByRole("link", { name: "@AmaeKoromo_MajS" })).toHaveAttribute(
+    "href",
+    "https://5-data.amae-koromo.com/"
+  );
+
   await page.getByRole("button", { name: "스타일 분석" }).click();
 
   await expectErrorToast(page, "닉네임을 입력해주세요.");
