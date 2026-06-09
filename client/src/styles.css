@@ -779,7 +779,9 @@ h1 {
 }
 
 .point-summary {
+  border-top: 1px solid var(--border-subtle);
   grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding-top: 14px;
 }
 
 .style-coordinates div,
@@ -813,10 +815,8 @@ h1 {
 }
 
 .point-chart {
-  border-top: 1px solid var(--border-subtle);
   height: 380px;
   min-width: 0;
-  padding-top: 12px;
   width: 100%;
 }
 
