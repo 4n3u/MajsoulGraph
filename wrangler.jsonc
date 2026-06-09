@@ -2,7 +2,7 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "majsoul-graph",
   "main": "worker/src/index.ts",
-  "compatibility_date": "2026-06-10",
+  "compatibility_date": "2026-06-09",
   "assets": {
     "directory": "./dist/client",
     "binding": "ASSETS",
