@@ -9,6 +9,15 @@ type SegmentDatum = {
   value: [number, number, number, number, number];
 };
 
+type TooltipItem = {
+  data?: unknown;
+  seriesName?: string;
+};
+
+type TooltipPointDatum = TimelinePoint & {
+  value: [number, number];
+};
+
 const modeColors: Record<number, string> = {
   8: "#d9a800",
   9: "#d9a800",
@@ -71,14 +80,28 @@ function formatDate(timestamp?: number): string {
   }).format(new Date(timestamp * 1000));
 }
 
-function tooltipFormatter(params: unknown): string {
-  const items = Array.isArray(params) ? params : [params];
-  const pointItem = items.find((item) => {
-    const value = (item as { value?: unknown }).value;
-    return Array.isArray(value) && value.length === 2;
-  }) as { data?: TimelinePoint; value?: [number, number] } | undefined;
+function isTooltipPointDatum(data: unknown): data is TooltipPointDatum {
+  if (typeof data !== "object" || data === null) return false;
+  const point = data as Partial<TooltipPointDatum>;
+  return (
+    Array.isArray(point.value) &&
+    point.value.length === 2 &&
+    typeof point.index === "number" &&
+    typeof point.point === "number" &&
+    typeof point.level === "number" &&
+    typeof point.rank === "number" &&
+    typeof point.modeId === "number" &&
+    typeof point.startTime === "number"
+  );
+}
 
-  if (!pointItem?.data) return "";
+function tooltipFormatter(params: unknown): string {
+  const items = (Array.isArray(params) ? params : [params]) as TooltipItem[];
+  const pointItem =
+    items.find((item) => item.seriesName === "포인트" && isTooltipPointDatum(item.data)) ??
+    items.find((item) => isTooltipPointDatum(item.data));
+
+  if (!isTooltipPointDatum(pointItem?.data)) return "";
 
   const point = pointItem.data;
   const modeLabel = modeLabels[point.modeId] ?? String(point.modeId);

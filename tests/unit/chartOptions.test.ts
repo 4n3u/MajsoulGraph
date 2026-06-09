@@ -3,6 +3,11 @@ import { buildPointChartOptions } from "@client/charts/pointChartOptions";
 import { buildStyleChartOptions } from "@client/charts/styleChartOptions";
 import { buildPointTimeline } from "@shared/pointTimeline";
 
+type TestSeries = {
+  data?: unknown[];
+  name?: string;
+};
+
 describe("point chart options", () => {
   it("builds a source-aligned point graph with room fills and rank guide lines", () => {
     const timeline = buildPointTimeline({
@@ -56,6 +61,41 @@ describe("point chart options", () => {
         })
       ])
     );
+  });
+
+  it("formats point tooltips from the point series instead of rank guide lines", () => {
+    const timeline = buildPointTimeline({
+      recordsDescending: [
+        {
+          modeId: 16,
+          startTime: 1000,
+          endTime: 2000,
+          players: [{ accountId: 1, score: 45000, level: 10301, gradingScore: 45 }]
+        }
+      ],
+      targetAccountId: 1,
+      initialLevel: 10301,
+      historyLevel: 10203
+    });
+    const options = buildPointChartOptions(timeline);
+    const tooltip = options.tooltip as { formatter?: (params: unknown) => string };
+    const series = (Array.isArray(options.series) ? options.series : [options.series]) as TestSeries[];
+    const pointSeries = series.find((item) => item.name === "포인트");
+    const pointDatum = pointSeries?.data?.[1];
+
+    const html = tooltip.formatter?.([
+      { seriesName: "원점", data: [1, 600], value: [1, 600] },
+      { seriesName: "승단선", data: [1, 1200], value: [1, 1200] },
+      { seriesName: "포인트", data: pointDatum, value: [1, 645] }
+    ]);
+
+    expect(html).toContain("1전");
+    expect(html).toContain("포인트: 645");
+    expect(html).toContain("등급: 10301");
+    expect(html).toContain("순위: 1위");
+    expect(html).toContain("탁: 4왕반");
+    expect(html).not.toContain("undefined");
+    expect(html).not.toContain("날짜: -");
   });
 });
 

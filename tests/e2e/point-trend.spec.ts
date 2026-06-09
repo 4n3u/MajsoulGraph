@@ -105,6 +105,17 @@ test("generates point trend chart from mocked player records", async ({ page }) 
       });
     })
     .toBe(true);
+  const chartBox = await chart.boundingBox();
+  if (!chartBox) {
+    throw new Error("Point chart bounds were not available");
+  }
+  await page.mouse.move(chartBox.x + chartBox.width * 0.5, chartBox.y + chartBox.height * 0.47);
+  await expect.poll(async () => page.locator("body").textContent()).toContain("포인트: 645");
+  await expect.poll(async () => page.locator("body").textContent()).toContain("등급: 10301");
+  await expect.poll(async () => page.locator("body").textContent()).toContain("순위: 1위");
+  await expect.poll(async () => page.locator("body").textContent()).toContain("탁: 4왕반");
+  await expect.poll(async () => page.locator("body").textContent()).not.toContain("undefined");
+  await expect.poll(async () => page.locator("body").textContent()).not.toContain("날짜: -");
   await expect(result.locator(".point-summary")).toHaveCount(0);
   await expect(result.getByRole("heading", { name: "단위전 이력" })).toBeVisible();
   await expect(result.getByText("걸1 (1 +1 +0 +0)=2판")).toBeVisible();
