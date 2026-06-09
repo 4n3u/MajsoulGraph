@@ -100,6 +100,11 @@ test("renders style analysis result from mocked API response", async ({ page }) 
 
   const chart = result.getByRole("img", { name: "스타일 분석 산점도" });
   await expect(chart).toBeVisible();
+  const chartBox = await chart.boundingBox();
+  if (!chartBox) {
+    throw new Error("Style chart bounds were not available");
+  }
+  expect(Math.abs(chartBox.width - chartBox.height)).toBeLessThan(2);
   const chartCanvas = chart.locator("canvas").first();
   await expect(chartCanvas).toBeAttached();
   await expect

@@ -783,9 +783,11 @@ h1 {
 }
 
 .style-chart {
-  height: 420px;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  justify-self: center;
   min-width: 0;
-  width: 100%;
+  width: min(100%, 620px);
 }
 
 .style-stat-list {
@@ -797,8 +799,9 @@ h1 {
 
 .point-chart {
   height: 380px;
+  margin-inline: -14px;
   min-width: 0;
-  width: 100%;
+  width: calc(100% + 28px);
 }
 
 .rank-history {
@@ -898,10 +901,13 @@ h1 {
 
   .point-chart {
     height: 320px;
+    margin-inline: -8px;
+    width: calc(100% + 16px);
   }
 
   .style-chart {
-    height: 340px;
+    height: auto;
+    width: 100%;
   }
 
   .rank-history {

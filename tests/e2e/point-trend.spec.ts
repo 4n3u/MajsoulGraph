@@ -109,6 +109,11 @@ test("generates point trend chart from mocked player records", async ({ page }) 
   if (!chartBox) {
     throw new Error("Point chart bounds were not available");
   }
+  const resultBox = await result.boundingBox();
+  if (!resultBox) {
+    throw new Error("Point result bounds were not available");
+  }
+  expect(chartBox.width).toBeGreaterThan(resultBox.width);
   await page.mouse.move(chartBox.x + chartBox.width * 0.5, chartBox.y + chartBox.height * 0.47);
   await expect.poll(async () => page.locator("body").textContent()).toContain("포인트: 645");
   await expect.poll(async () => page.locator("body").textContent()).toContain("등급: 10301");
