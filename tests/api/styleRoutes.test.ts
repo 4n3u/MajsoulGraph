@@ -59,11 +59,21 @@ const rawStyleStats = {
   "追立率": 0.16
 };
 
-function makeRecords(count: number, newestStartTime: number): Array<{ uuid: string; startTime: number }> {
-  return Array.from({ length: count }, (_, index) => ({
-    uuid: `game-${index + 1}`,
-    startTime: newestStartTime - index
-  }));
+function makeRecord(uuid: string, startTime: number) {
+  return {
+    uuid,
+    modeId: 16,
+    startTime,
+    endTime: startTime + 300,
+    players: [
+      { accountId: 123, score: 45000, level: 10301, gradingScore: 45 },
+      { accountId: 456, score: 30000, level: 10301, gradingScore: 15 }
+    ]
+  };
+}
+
+function makeRecords(count: number, newestStartTime: number): ReturnType<typeof makeRecord>[] {
+  return Array.from({ length: count }, (_, index) => makeRecord(`game-${index + 1}`, newestStartTime - index));
 }
 
 describe("player style API route", () => {
@@ -146,8 +156,8 @@ describe("player style API route", () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify([
-            { uuid: "newer", startTime: 1700000500 },
-            { uuid: "oldest", startTime: 1700000000 }
+            makeRecord("newer", 1700000500),
+            makeRecord("oldest", 1700000000)
           ]),
           { status: 200, headers: { "content-type": "application/json" } }
         )
@@ -194,12 +204,6 @@ describe("player style API route", () => {
         })
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify([{ uuid: "too-old", startTime: 1600000000 }]), {
-          status: 200,
-          headers: { "content-type": "application/json" }
-        })
-      )
-      .mockResolvedValueOnce(
         new Response(JSON.stringify(rawStyleStats), {
           status: 200,
           headers: { "content-type": "application/json" }
@@ -227,7 +231,7 @@ describe("player style API route", () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.setSystemTime(new Date("2026-06-09T00:00:00.000Z"));
     const firstPage = makeRecords(500, 1700001000);
-    const secondPage = [{ uuid: "game-501", startTime: 1700000500 }];
+    const secondPage = [makeRecord("game-501", 1700000500)];
     const upstreamFetch = vi
       .fn()
       .mockResolvedValueOnce(
@@ -315,6 +319,24 @@ describe("player style API route", () => {
     });
   });
 
+  test("returns bad_input for style count above the bounded page limit", async () => {
+    const upstreamFetch = vi.fn();
+    vi.stubGlobal("fetch", upstreamFetch);
+
+    const response = await getJson("/api/player-style?nickname=Tester&count=50001");
+
+    expect(response).toEqual({
+      status: 400,
+      body: {
+        error: {
+          code: "bad_input",
+          message: "count must be at most 50000"
+        }
+      }
+    });
+    expect(upstreamFetch).not.toHaveBeenCalled();
+  });
+
   test("returns player_not_found when latestTimestamp is missing", async () => {
     vi.stubGlobal(
       "fetch",
@@ -363,7 +385,7 @@ describe("player style API route", () => {
     });
   });
 
-  test("returns no_records when the count boundary record has an unsafe startTime", async () => {
+  test("returns upstream_error when a count boundary record has an unsafe startTime", async () => {
     const upstreamFetch = vi
       .fn()
       .mockResolvedValueOnce(
@@ -373,7 +395,7 @@ describe("player style API route", () => {
         })
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify([{ uuid: "bad", startTime: 9007199254740992 }]), {
+        new Response(JSON.stringify([{ ...makeRecord("bad", 1700000000), startTime: 9007199254740992 }]), {
           status: 200,
           headers: { "content-type": "application/json" }
         })
@@ -383,11 +405,11 @@ describe("player style API route", () => {
     const response = await getJson("/api/player-style?nickname=Tester&count=1");
 
     expect(response).toEqual({
-      status: 404,
+      status: 502,
       body: {
         error: {
-          code: "no_records",
-          message: "No valid records found"
+          code: "upstream_error",
+          message: "Amae-Koromo request failed"
         }
       }
     });

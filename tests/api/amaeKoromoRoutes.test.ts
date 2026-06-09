@@ -9,6 +9,19 @@ type JsonResponse = {
   body: unknown;
 };
 
+function makeGameRecord(uuid: string, startTime: number) {
+  return {
+    uuid,
+    modeId: 16,
+    startTime,
+    endTime: startTime + 300,
+    players: [
+      { accountId: 42, score: 45000, level: 10301, gradingScore: 45 },
+      { accountId: 7, score: 30000, level: 10301, gradingScore: 15 }
+    ]
+  };
+}
+
 const originalFetch = globalThis.fetch;
 
 async function listen(server: Server): Promise<number> {
@@ -163,7 +176,7 @@ describe("Amae-Koromo API routes", () => {
   });
 
   test("returns player records from the legacy Amae-Koromo URL shape", async () => {
-    const records = [{ uuid: "game-1", startTime: 1700000000 }];
+    const records = [makeGameRecord("game-1", 1700000000)];
     const upstreamFetch = vi.fn().mockResolvedValue(
       new Response(JSON.stringify(records), { status: 200, headers: { "content-type": "application/json" } })
     );
@@ -244,11 +257,8 @@ describe("Amae-Koromo API routes", () => {
   });
 
   test("paginates full player-record pages using second-based cursors", async () => {
-    const firstPage = Array.from({ length: 500 }, (_, index) => ({
-      uuid: `game-${index}`,
-      startTime: 1700000500 - index
-    }));
-    const secondPage = [{ uuid: "game-501", startTime: 1699999999 }];
+    const firstPage = Array.from({ length: 500 }, (_, index) => makeGameRecord(`game-${index}`, 1700000500 - index));
+    const secondPage = [makeGameRecord("game-501", 1699999999)];
     const upstreamFetch = vi
       .fn()
       .mockResolvedValueOnce(

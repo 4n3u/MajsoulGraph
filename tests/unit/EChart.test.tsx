@@ -16,6 +16,23 @@ vi.mock("echarts/core", () => ({
   use: echartsMock.use
 }));
 
+vi.mock("echarts/charts", () => ({
+  CustomChart: {},
+  LineChart: {},
+  ScatterChart: {}
+}));
+
+vi.mock("echarts/components", () => ({
+  DataZoomComponent: {},
+  GridComponent: {},
+  MarkLineComponent: {},
+  TooltipComponent: {}
+}));
+
+vi.mock("echarts/renderers", () => ({
+  CanvasRenderer: {}
+}));
+
 import { EChart } from "@client/charts/EChart";
 
 const reactActEnvironment = globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean };
@@ -30,6 +47,14 @@ class TestResizeObserver {
 
   constructor() {
     TestResizeObserver.instances.push(this);
+  }
+}
+
+async function waitForChartInit() {
+  for (let attempt = 0; attempt < 10 && echartsMock.init.mock.calls.length === 0; attempt += 1) {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
   }
 }
 
@@ -52,27 +77,29 @@ describe("EChart", () => {
     vi.restoreAllMocks();
   });
 
-  it("replaces chart options on update and disconnects container resize observer on unmount", () => {
+  it("replaces chart options on update and disconnects container resize observer on unmount", async () => {
     const container = document.createElement("div");
     const root = createRoot(container);
     const pointOption: ChartOption = { series: [{ type: "line", data: [[0, 600]] }] };
     const styleOption: ChartOption = { series: [{ type: "scatter", data: [[12, -8]] }] };
 
-    act(() => {
+    await act(async () => {
       root.render(<EChart option={pointOption} ariaLabel="Points" />);
     });
+    await waitForChartInit();
 
     expect(echartsMock.init).toHaveBeenCalledOnce();
+    expect(echartsMock.use).toHaveBeenCalledOnce();
     expect(TestResizeObserver.instances[0]?.observe).toHaveBeenCalledWith(expect.any(HTMLDivElement));
     expect(echartsMock.setOption).toHaveBeenLastCalledWith(pointOption, expect.objectContaining({ notMerge: true }));
 
-    act(() => {
+    await act(async () => {
       root.render(<EChart option={styleOption} ariaLabel="Style" />);
     });
 
     expect(echartsMock.setOption).toHaveBeenLastCalledWith(styleOption, expect.objectContaining({ notMerge: true }));
 
-    act(() => {
+    await act(async () => {
       root.unmount();
     });
 

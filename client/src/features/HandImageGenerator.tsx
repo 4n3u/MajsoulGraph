@@ -1,4 +1,4 @@
-import { FormEvent, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { parsePaiGroups, type ParsedTile } from "@shared/handParser";
 import { Button, CheckboxField, TextField } from "../components/BaseControls";
 import { useErrorToast } from "../components/ErrorToasts";
@@ -94,10 +94,21 @@ export function HandImageGenerator() {
   const [useNumberedTiles, setUseNumberedTiles] = useState(false);
   const [hasPreview, setHasPreview] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const renderRequestIdRef = useRef(0);
   const showError = useErrorToast();
 
-  async function renderHand(groups: ParsedTile[][]) {
-    const basePath = assetBasePath(useNumberedTiles);
+  useEffect(() => {
+    return () => {
+      renderRequestIdRef.current += 1;
+    };
+  }, []);
+
+  async function renderHand(
+    groups: ParsedTile[][],
+    numberedTiles: boolean,
+    isCurrentRequest: () => boolean
+  ): Promise<boolean> {
+    const basePath = assetBasePath(numberedTiles);
     const loadedGroups: TileRenderData[][] = await Promise.all(
       groups.map((group) =>
         Promise.all(
@@ -116,6 +127,10 @@ export function HandImageGenerator() {
         )
       )
     );
+
+    if (!isCurrentRequest()) {
+      return false;
+    }
 
     const groupWidths = loadedGroups.map((group) =>
       group.reduce((sum, tile) => sum + tileFootprint(tile).width, 0)
@@ -137,6 +152,10 @@ export function HandImageGenerator() {
       throw new Error("canvas unavailable");
     }
 
+    if (!isCurrentRequest()) {
+      return false;
+    }
+
     canvas.width = contentWidth + padding * 2;
     canvas.height = maxTileHeight + padding * 2;
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -151,10 +170,16 @@ export function HandImageGenerator() {
       }
       x += groupGap;
     }
+
+    return true;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const requestId = renderRequestIdRef.current + 1;
+    renderRequestIdRef.current = requestId;
+    const isCurrentRequest = () => renderRequestIdRef.current === requestId;
+
     setHasPreview(false);
     setIsGenerating(true);
 
@@ -167,9 +192,15 @@ export function HandImageGenerator() {
         return;
       }
 
-      await renderHand(groups);
-      setHasPreview(true);
+      const didRender = await renderHand(groups, useNumberedTiles, isCurrentRequest);
+      if (didRender && isCurrentRequest()) {
+        setHasPreview(true);
+      }
     } catch (caughtError) {
+      if (!isCurrentRequest()) {
+        return;
+      }
+
       if (caughtError instanceof Error && caughtError.message.startsWith("missing asset:")) {
         showError("패 이미지 파일을 찾을 수 없습니다. 입력한 패를 확인해 주세요.");
         return;
@@ -177,7 +208,9 @@ export function HandImageGenerator() {
 
       showError(describeParseError(caughtError));
     } finally {
-      setIsGenerating(false);
+      if (isCurrentRequest()) {
+        setIsGenerating(false);
+      }
     }
   }
 
@@ -207,6 +240,7 @@ export function HandImageGenerator() {
             onValueChange={setInput}
             placeholder="m123 p456 s789 z123"
             type="text"
+            disabled={isGenerating}
             value={input}
           />
           <Button className="primary-button" type="submit" disabled={isGenerating}>
@@ -218,6 +252,7 @@ export function HandImageGenerator() {
           checked={useNumberedTiles}
           label="숫자 표기"
           name="numbered-tiles"
+          disabled={isGenerating}
           onCheckedChange={setUseNumberedTiles}
         />
       </form>

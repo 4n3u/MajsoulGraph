@@ -1,4 +1,5 @@
 import type { TimelinePoint, TimelineResult } from "@shared/pointTimeline";
+import { gameModeLabels } from "@shared/mahjongModes";
 import type { ChartOption } from "./EChart";
 
 type SegmentDatum = {
@@ -31,21 +32,6 @@ const modeColors: Record<number, string> = {
   24: "#3f9f46",
   25: "#d94b4b",
   26: "#d94b4b"
-};
-
-const modeLabels: Record<number, string> = {
-  8: "4금동",
-  9: "4금반",
-  11: "4옥동",
-  12: "4옥반",
-  15: "4왕동",
-  16: "4왕반",
-  21: "3금동",
-  22: "3금반",
-  23: "3옥동",
-  24: "3옥반",
-  25: "3왕동",
-  26: "3왕반"
 };
 
 function playedPoints(points: TimelinePoint[]): TimelinePoint[] {
@@ -104,7 +90,7 @@ function tooltipFormatter(params: unknown): string {
   if (!isTooltipPointDatum(pointItem?.data)) return "";
 
   const point = pointItem.data;
-  const modeLabel = modeLabels[point.modeId] ?? String(point.modeId);
+  const modeLabel = gameModeLabels[point.modeId] ?? String(point.modeId);
   return [
     `${point.index}전`,
     `포인트: ${point.point}`,

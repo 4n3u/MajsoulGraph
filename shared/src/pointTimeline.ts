@@ -1,4 +1,6 @@
-export type GameModeId = 8 | 9 | 11 | 12 | 15 | 16 | 21 | 22 | 23 | 24 | 25 | 26;
+import { supportedGameModeIds, type GameModeId } from "./mahjongModes";
+
+export type { GameModeId } from "./mahjongModes";
 
 export type PlayerRecord = {
   accountId: number;
@@ -119,7 +121,7 @@ const maxUp: Record<number, number> = {
   502: 6000,
   503: 9000
 };
-const supportedModeIds = new Set<number>([8, 9, 11, 12, 15, 16, 21, 22, 23, 24, 25, 26]);
+const supportedModeIds = new Set<number>(supportedGameModeIds);
 
 for (let level = 601; level <= 620; level += 1) {
   maxUp[level] = 10000;

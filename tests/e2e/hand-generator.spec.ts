@@ -117,6 +117,33 @@ test("renders uppercase tiles with legacy counterclockwise rotation", async ({ p
   expect(rotation.diffPixels).toBe(0);
 });
 
+test("locks the hand controls while image assets are loading", async ({ page }) => {
+  let releaseImage = () => {};
+  const imageGate = new Promise<void>((resolve) => {
+    releaseImage = resolve;
+  });
+
+  await page.route("**/assets/img/pai_img/1m.png", async (route) => {
+    await imageGate;
+    await route.continue();
+  });
+
+  await page.getByLabel("패 입력").fill("m1");
+
+  try {
+    await page.getByRole("button", { name: "이미지 생성" }).click();
+
+    await expect(page.getByLabel("패 입력")).toBeDisabled();
+    await expect(page.getByRole("checkbox", { name: "숫자 표기" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "생성 중" })).toBeDisabled();
+  } finally {
+    releaseImage();
+  }
+
+  await expect(page.getByRole("button", { name: "이미지 생성" })).toBeEnabled();
+  await expect(page.getByLabel("생성된 손패 이미지")).toBeVisible();
+});
+
 test("shows a Korean error for hands over the tile limit", async ({ page }) => {
   await page.getByLabel("패 입력").fill("m1111111111111111111");
   await page.getByRole("button", { name: "이미지 생성" }).click();

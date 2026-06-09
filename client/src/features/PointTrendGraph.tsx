@@ -5,6 +5,7 @@ import {
   type PointTimelineInput,
   type TimelineResult
 } from "@shared/pointTimeline";
+import { gameModeLabels, type GameModeId } from "@shared/mahjongModes";
 import { EChart } from "../charts/EChart";
 import { buildPointChartOptions } from "../charts/pointChartOptions";
 import { Button, ProgressBar, SelectField, TextField } from "../components/BaseControls";
@@ -64,21 +65,6 @@ const sameNameOptions: ReadonlyArray<{ label: string; value: SameNameIndex }> = 
   { label: "1", value: "1" },
   { label: "2", value: "2" }
 ];
-
-const modeLabels: Record<number, string> = {
-  8: "4금동",
-  9: "4금반",
-  11: "4옥동",
-  12: "4옥반",
-  15: "4왕동",
-  16: "4왕반",
-  21: "3금동",
-  22: "3금반",
-  23: "3옥동",
-  24: "3옥반",
-  25: "3왕동",
-  26: "3왕반"
-};
 
 function formatDate(timestamp: number): string {
   return new Intl.DateTimeFormat("ko-KR", {
@@ -141,7 +127,10 @@ function progressValue(current: number, total: number): number {
 
 function formatModeCounts(modeCounts: Partial<Record<number, number>>): string {
   return Object.entries(modeCounts)
-    .map(([modeId, count]) => `${modeLabels[Number(modeId)] ?? modeId} ${count}판`)
+    .map(([modeId, count]) => {
+      const parsedModeId = Number(modeId) as GameModeId;
+      return `${gameModeLabels[parsedModeId] ?? modeId} ${count}판`;
+    })
     .join(", ");
 }
 

@@ -19,8 +19,19 @@ export type PlayerSearchResult = {
   latestTimestamp: number | undefined;
 };
 
+type PlayerRecordPlayer = {
+  accountId: number;
+  gradingScore: number;
+  level: number;
+  score: number;
+  [key: string]: unknown;
+};
+
 type PlayerRecord = {
-  startTime?: number;
+  endTime: number;
+  modeId: number;
+  players: PlayerRecordPlayer[];
+  startTime: number;
   [key: string]: unknown;
 };
 
@@ -108,7 +119,62 @@ function assertPlayerSearchResults(value: unknown): UpstreamPlayer[] {
 
 function assertPlayerRecords(value: unknown): PlayerRecord[] {
   if (!Array.isArray(value)) throw upstreamShapeError();
-  return value as PlayerRecord[];
+  return value.map(assertPlayerRecord);
+}
+
+function assertSafeInteger(value: unknown): number {
+  if (typeof value !== "number" || !Number.isSafeInteger(value)) {
+    throw upstreamShapeError();
+  }
+
+  return value;
+}
+
+function assertFiniteNumber(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw upstreamShapeError();
+  }
+
+  return value;
+}
+
+function assertPlayerRecordPlayer(value: unknown): PlayerRecordPlayer {
+  if (typeof value !== "object" || value === null) throw upstreamShapeError();
+  const player = value as Record<string, unknown>;
+
+  return {
+    ...player,
+    accountId: assertSafeInteger(player.accountId),
+    gradingScore: assertFiniteNumber(player.gradingScore),
+    level: assertSafeInteger(player.level),
+    score: assertFiniteNumber(player.score)
+  };
+}
+
+function assertPlayerRecord(value: unknown): PlayerRecord {
+  if (typeof value !== "object" || value === null) throw upstreamShapeError();
+  const record = value as Record<string, unknown>;
+  const rawPlayers = record.players;
+  if (!Array.isArray(rawPlayers)) throw upstreamShapeError();
+
+  return {
+    ...record,
+    endTime: assertSafeInteger(record.endTime),
+    modeId: assertSafeInteger(record.modeId),
+    players: rawPlayers.map(assertPlayerRecordPlayer),
+    startTime: assertSafeInteger(record.startTime)
+  };
+}
+
+function assertNumericRecord(value: unknown): Record<string, number> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) throw upstreamShapeError();
+  const result: Record<string, number> = {};
+
+  for (const [key, rawValue] of Object.entries(value)) {
+    result[key] = assertFiniteNumber(rawValue);
+  }
+
+  return result;
 }
 
 function writeCache(url: string, value: unknown, now: number): void {
@@ -234,9 +300,11 @@ export async function fetchPlayerExtendedStats(
   const normalizedTo = requireText(to, "to");
   const normalizedGameMode = requireText(gameMode, "gameMode");
 
-  return cachedJson<Record<string, number>>(
-    `${apiBase("pl4")}player_extended_stats/${encodeURIComponent(normalizedPlayerId)}/` +
-      `${encodeURIComponent(normalizedFrom)}/${encodeURIComponent(normalizedTo)}` +
-      `?mode=${encodeURIComponent(normalizedGameMode)}&tag=`
+  return assertNumericRecord(
+    await cachedJson<unknown>(
+      `${apiBase("pl4")}player_extended_stats/${encodeURIComponent(normalizedPlayerId)}/` +
+        `${encodeURIComponent(normalizedFrom)}/${encodeURIComponent(normalizedTo)}` +
+        `?mode=${encodeURIComponent(normalizedGameMode)}&tag=`
+    )
   );
 }

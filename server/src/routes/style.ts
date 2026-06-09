@@ -6,6 +6,8 @@ import { fetchPlayerExtendedStats, fetchPlayerRecordsPage, searchPlayer } from "
 export const styleRouter = Router();
 
 const defaultFrom = 1_262_304_000_000;
+const maxStyleRecordCount = 50_000;
+const maxStyleRecordPages = 100;
 const styleGameMode = "16.12.9";
 
 function parseSameName(value: unknown): number {
@@ -33,6 +35,10 @@ function parseCount(value: unknown): number | undefined {
     throw new ApiError(400, "bad_input", "count must be a positive integer");
   }
 
+  if (count > maxStyleRecordCount) {
+    throw new ApiError(400, "bad_input", `count must be at most ${maxStyleRecordCount}`);
+  }
+
   return count;
 }
 
@@ -47,8 +53,10 @@ async function fetchRecentStyleRecords(
 ): Promise<Array<{ startTime?: number; [key: string]: unknown }>> {
   const records: Array<{ startTime?: number; [key: string]: unknown }> = [];
   let cursor = latestTimestamp;
+  let pages = 0;
 
-  while (records.length < count) {
+  while (records.length < count && pages < maxStyleRecordPages) {
+    pages += 1;
     const pageLimit = Math.min(500, count - records.length);
     const page = await fetchPlayerRecordsPage("pl4", playerId, cursor, styleGameMode, pageLimit);
     if (page.length === 0) break;
