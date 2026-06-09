@@ -34,7 +34,7 @@ export function buildStyleChartOptions(input: StyleChartInput): ChartOption {
   return {
     animation: false,
     grid: {
-      left: 8,
+      left: 0,
       right: 16,
       top: 28,
       bottom: 44,
@@ -58,7 +58,7 @@ export function buildStyleChartOptions(input: StyleChartInput): ChartOption {
       min: -30,
       max: 30,
       axisLabel: {
-        margin: 6
+        margin: 2
       },
       splitLine: {
         lineStyle: {
