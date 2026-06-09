@@ -842,7 +842,13 @@ h1 {
   border-top: 1px solid var(--border-subtle);
   display: grid;
   gap: 8px;
-  grid-template-columns: minmax(96px, 1fr) minmax(96px, 1fr) repeat(3, minmax(58px, auto));
+  grid-template-columns:
+    minmax(150px, 1.5fr)
+    minmax(170px, 1.5fr)
+    minmax(84px, 0.8fr)
+    minmax(72px, 0.7fr)
+    minmax(72px, 0.7fr)
+    minmax(110px, 1fr);
   padding: 10px 0;
 }
 

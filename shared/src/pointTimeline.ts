@@ -16,12 +16,24 @@ export type GameRecord = {
 
 export type TimelinePoint = {
   index: number;
+  pointBefore: number;
   point: number;
+  basePoint: number;
+  promotionPoint: number;
   level: number;
   rank: number;
   modeId: GameModeId;
   startTime: number;
   endTime: number;
+};
+
+export type RankTransition = {
+  index: number;
+  fromLevel: number;
+  toLevel: number;
+  fromLevelLabel: string;
+  toLevelLabel: string;
+  ceilingPoint: number;
 };
 
 export type RankHistoryEntry = {
@@ -38,9 +50,27 @@ export type RankHistoryEntry = {
   endTime: number;
 };
 
+export type RankPeriodSummary = {
+  averageRank: number;
+  endTime: number;
+  gameCount: number;
+  highPoint: number;
+  indexEnd: number;
+  indexStart: number;
+  level: number;
+  levelLabel: string;
+  lowPoint: number;
+  modeCounts: Partial<Record<GameModeId, number>>;
+  periodDays: number;
+  rankCounts: Record<1 | 2 | 3 | 4, number>;
+  startTime: number;
+};
+
 export type TimelineResult = {
   points: TimelinePoint[];
   rankHistory: RankHistoryEntry[];
+  rankPeriods: RankPeriodSummary[];
+  rankTransitions: RankTransition[];
   summary: {
     gameCount: number;
     lowPoint: number;
@@ -48,6 +78,7 @@ export type TimelineResult = {
     finalPoint: number;
     highestLevel: number;
     highestLevelLabel: string;
+    maxPointLimit: number;
   };
 };
 
@@ -64,6 +95,7 @@ export type PointTimelineInput = {
 
 type PointTimelineProcessorState = {
   chronological: PointTimelineGameRecord[];
+  currentBasePoint: number;
   currentPoint: number;
   historyPoint: number;
   historyPreviousLevel: number;
@@ -71,11 +103,31 @@ type PointTimelineProcessorState = {
   points: TimelinePoint[];
   previousLevel: number;
   rankHistory: RankHistoryEntry[];
+  rankTransitions: RankTransition[];
 };
 
 const danNames = ["사", "걸", "호", "성", "천", "천"] as const;
 const ptBase: Record<number, number> = { 301: 6, 302: 7, 303: 10, 401: 14, 402: 16, 403: 18, 501: 20, 502: 30, 503: 45 };
+const maxUp: Record<number, number> = {
+  301: 1200,
+  302: 1400,
+  303: 2000,
+  401: 2800,
+  402: 3200,
+  403: 3600,
+  501: 4000,
+  502: 6000,
+  503: 9000
+};
 const supportedModeIds = new Set<number>([8, 9, 11, 12, 15, 16, 21, 22, 23, 24, 25, 26]);
+
+for (let level = 601; level <= 620; level += 1) {
+  maxUp[level] = 10000;
+}
+
+for (let level = 701; level <= 720; level += 1) {
+  maxUp[level] = 10000;
+}
 
 function assertGameModeId(modeId: number): GameModeId {
   if (!supportedModeIds.has(modeId)) {
@@ -108,6 +160,10 @@ export function levelPtBase(level: number): number {
   return base * 100;
 }
 
+export function levelPointLimit(level: number): number {
+  return maxUp[level % 1000] ?? 5000;
+}
+
 export function getRank(players: PlayerRecord[], targetAccountId: number): number {
   const rankIndex = [...players]
     .sort((a, b) => b.score - a.score)
@@ -124,6 +180,7 @@ function createProcessorState(input: PointTimelineInput): PointTimelineProcessor
 
   return {
     chronological,
+    currentBasePoint: 600,
     currentPoint: 600,
     historyPoint: 600,
     historyPreviousLevel: input.historyLevel,
@@ -131,7 +188,10 @@ function createProcessorState(input: PointTimelineInput): PointTimelineProcessor
     points: [
       {
         index: 0,
+        pointBefore: 600,
         point: 600,
+        basePoint: 600,
+        promotionPoint: 1200,
         level: input.initialLevel,
         rank: 0,
         modeId: initialModeId,
@@ -140,7 +200,8 @@ function createProcessorState(input: PointTimelineInput): PointTimelineProcessor
       }
     ],
     previousLevel: input.initialLevel,
-    rankHistory: []
+    rankHistory: [],
+    rankTransitions: []
   };
 }
 
@@ -158,14 +219,27 @@ function processTimelineRecord(state: PointTimelineProcessorState, input: PointT
   const rank = getRank(game.players, input.targetAccountId);
 
   if (state.previousLevel !== player.level) {
+    state.rankTransitions.push({
+      index,
+      fromLevel: state.previousLevel,
+      toLevel: player.level,
+      fromLevelLabel: levelDan(state.previousLevel),
+      toLevelLabel: levelDan(player.level),
+      ceilingPoint: Math.max(levelPtBase(player.level), levelPtBase(state.previousLevel)) * 2
+    });
+    state.currentBasePoint = levelPtBase(player.level);
     state.currentPoint = levelPtBase(player.level);
   }
 
+  const pointBefore = state.currentPoint;
   state.currentPoint = applyGradingScore(player.level, state.currentPoint, player.gradingScore);
 
   state.points.push({
     index: index + 1,
+    pointBefore,
     point: state.currentPoint,
+    basePoint: state.currentBasePoint,
+    promotionPoint: state.currentBasePoint * 2,
     level: player.level,
     rank,
     modeId,
@@ -177,7 +251,7 @@ function processTimelineRecord(state: PointTimelineProcessorState, input: PointT
     state.historyPoint = levelPtBase(player.level);
   }
 
-  const pointBefore = state.historyPoint;
+  const historyPointBefore = state.historyPoint;
   state.historyPoint = applyGradingScore(player.level, state.historyPoint, player.gradingScore);
 
   state.rankHistory.push({
@@ -187,7 +261,7 @@ function processTimelineRecord(state: PointTimelineProcessorState, input: PointT
     fromLevelLabel: levelDan(state.historyPreviousLevel),
     toLevelLabel: levelDan(player.level),
     rank,
-    pointBefore,
+    pointBefore: historyPointBefore,
     pointAfter: state.historyPoint,
     modeId,
     startTime: game.startTime,
@@ -198,6 +272,63 @@ function processTimelineRecord(state: PointTimelineProcessorState, input: PointT
   state.historyPreviousLevel = player.level;
 }
 
+function dayNumber(timestamp: number): number {
+  const date = new Date(timestamp * 1000);
+  date.setHours(0, 0, 0, 0);
+  return Math.floor(date.getTime() / 86_400_000);
+}
+
+function createEmptyRankCounts(): Record<1 | 2 | 3 | 4, number> {
+  return { 1: 0, 2: 0, 3: 0, 4: 0 };
+}
+
+function buildRankPeriods(rankHistory: RankHistoryEntry[]): RankPeriodSummary[] {
+  type MutableRankPeriod = Omit<RankPeriodSummary, "averageRank" | "periodDays"> & {
+    rankTotal: number;
+  };
+
+  const periods: MutableRankPeriod[] = [];
+
+  for (const entry of rankHistory) {
+    let period = periods.at(-1);
+    if (!period || period.level !== entry.toLevel) {
+      period = {
+        endTime: entry.endTime,
+        gameCount: 0,
+        highPoint: entry.pointBefore,
+        indexEnd: entry.index,
+        indexStart: entry.index,
+        level: entry.toLevel,
+        levelLabel: entry.toLevelLabel,
+        lowPoint: entry.pointBefore,
+        modeCounts: {},
+        rankCounts: createEmptyRankCounts(),
+        rankTotal: 0,
+        startTime: entry.startTime
+      };
+      periods.push(period);
+    }
+
+    period.endTime = entry.endTime;
+    period.indexEnd = entry.index;
+    period.gameCount += 1;
+    period.highPoint = Math.max(period.highPoint, entry.pointBefore, entry.pointAfter);
+    period.lowPoint = Math.min(period.lowPoint, entry.pointBefore, entry.pointAfter);
+    period.rankTotal += entry.rank;
+
+    if (entry.rank === 1 || entry.rank === 2 || entry.rank === 3 || entry.rank === 4) {
+      period.rankCounts[entry.rank] += 1;
+    }
+    period.modeCounts[entry.modeId] = (period.modeCounts[entry.modeId] ?? 0) + 1;
+  }
+
+  return periods.map(({ rankTotal, ...period }) => ({
+    ...period,
+    averageRank: rankTotal / period.gameCount,
+    periodDays: dayNumber(period.endTime) - dayNumber(period.startTime) + 1
+  }));
+}
+
 function finalizeTimeline(state: PointTimelineProcessorState): TimelineResult {
   const pointValues = state.points.map((point) => point.point);
   const highestLevel = Math.max(...state.points.map((point) => point.level));
@@ -205,13 +336,16 @@ function finalizeTimeline(state: PointTimelineProcessorState): TimelineResult {
   return {
     points: state.points,
     rankHistory: state.rankHistory,
+    rankPeriods: buildRankPeriods(state.rankHistory),
+    rankTransitions: state.rankTransitions,
     summary: {
       gameCount: Math.max(state.points.length - 1, 0),
       lowPoint: Math.min(...pointValues),
       highPoint: Math.max(...pointValues),
       finalPoint: state.points.at(-1)?.point ?? 600,
       highestLevel,
-      highestLevelLabel: levelDan(highestLevel)
+      highestLevelLabel: levelDan(highestLevel),
+      maxPointLimit: levelPointLimit(highestLevel)
     }
   };
 }

@@ -65,6 +65,21 @@ const sameNameOptions: ReadonlyArray<{ label: string; value: SameNameIndex }> = 
   { label: "2", value: "2" }
 ];
 
+const modeLabels: Record<number, string> = {
+  8: "4금동",
+  9: "4금반",
+  11: "4옥동",
+  12: "4옥반",
+  15: "4왕동",
+  16: "4왕반",
+  21: "3금동",
+  22: "3금반",
+  23: "3옥동",
+  24: "3옥반",
+  25: "3왕동",
+  26: "3왕반"
+};
+
 function formatDate(timestamp: number): string {
   return new Intl.DateTimeFormat("ko-KR", {
     year: "numeric",
@@ -124,6 +139,16 @@ function progressValue(current: number, total: number): number {
   return Math.round((current / total) * 100);
 }
 
+function formatModeCounts(modeCounts: Partial<Record<number, number>>): string {
+  return Object.entries(modeCounts)
+    .map(([modeId, count]) => `${modeLabels[Number(modeId)] ?? modeId} ${count}판`)
+    .join(", ");
+}
+
+function formatRankBreakdown(rankCounts: Record<1 | 2 | 3 | 4, number>): string {
+  return `${rankCounts[1]} +${rankCounts[2]} +${rankCounts[3]} +${rankCounts[4]}`;
+}
+
 async function buildPointTimelineWithProgress(
   input: PointTimelineInput,
   setProgress: (progress: LoadingProgress) => void,
@@ -181,7 +206,7 @@ export function PointTrendGraph() {
   }, []);
 
   const chartOptions = useMemo(() => {
-    return timeline ? buildPointChartOptions(timeline.points) : null;
+    return timeline ? buildPointChartOptions(timeline) : null;
   }, [timeline]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -373,17 +398,20 @@ export function PointTrendGraph() {
           <EChart className="point-chart" option={chartOptions} ariaLabel="포인트 추이 그래프" />
 
           <section className="rank-history" aria-labelledby="rank-history-title">
-            <h3 id="rank-history-title">최근 등급 기록</h3>
+            <h3 id="rank-history-title">단위전 이력</h3>
             <div className="rank-history-list">
-              {timeline.rankHistory.slice(-6).map((entry) => (
-                <div className="rank-history-row" key={`${entry.index}-${entry.startTime}`}>
-                  <span>{formatDate(entry.startTime)}</span>
+              {timeline.rankPeriods.map((period) => (
+                <div className="rank-history-row" key={`${period.level}-${period.indexStart}-${period.startTime}`}>
+                  <span>
+                    {formatDate(period.startTime)} - {formatDate(period.endTime)} ({period.periodDays}일)
+                  </span>
                   <strong>
-                    {entry.fromLevelLabel} -&gt; {entry.toLevelLabel}
+                    {period.levelLabel} ({formatRankBreakdown(period.rankCounts)})={period.gameCount}판
                   </strong>
-                  <span>{entry.pointBefore} pt</span>
-                  <span>{entry.pointAfter} pt</span>
-                  <span>{entry.rank}위</span>
+                  <span>평균 순위 {period.averageRank.toFixed(3)}</span>
+                  <span>최고 pt {period.highPoint}</span>
+                  <span>최저 pt {period.lowPoint}</span>
+                  <span>{formatModeCounts(period.modeCounts)}</span>
                 </div>
               ))}
             </div>

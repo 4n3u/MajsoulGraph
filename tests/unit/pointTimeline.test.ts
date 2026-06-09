@@ -58,6 +58,11 @@ describe("point timeline", () => {
     });
 
     expect(result.points.map((point) => point.point)).toEqual([600, 645, 650]);
+    expect(result.points[1]).toMatchObject({
+      pointBefore: 600,
+      basePoint: 600,
+      promotionPoint: 1200
+    });
     expect(result.rankHistory[0]).toMatchObject({
       fromLevelLabel: "사3",
       toLevelLabel: "걸1",
@@ -66,6 +71,16 @@ describe("point timeline", () => {
     });
     expect(result.summary.gameCount).toBe(2);
     expect(result.summary.highPoint).toBe(650);
+    expect(result.summary.maxPointLimit).toBe(1200);
+    expect(result.rankPeriods[0]).toMatchObject({
+      levelLabel: "걸1",
+      gameCount: 2,
+      averageRank: 1.5,
+      highPoint: 650,
+      lowPoint: 600,
+      rankCounts: { 1: 1, 2: 1, 3: 0, 4: 0 },
+      modeCounts: { 16: 2 }
+    });
   });
 
   it("rejects unsupported game modes", () => {

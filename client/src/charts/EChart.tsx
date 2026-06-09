@@ -1,6 +1,13 @@
 import { useEffect, useRef } from "react";
 import * as echarts from "echarts/core";
-import { LineChart, ScatterChart, type LineSeriesOption, type ScatterSeriesOption } from "echarts/charts";
+import {
+  CustomChart,
+  LineChart,
+  ScatterChart,
+  type CustomSeriesOption,
+  type LineSeriesOption,
+  type ScatterSeriesOption
+} from "echarts/charts";
 import {
   DataZoomComponent,
   GridComponent,
@@ -15,11 +22,21 @@ import { CanvasRenderer } from "echarts/renderers";
 import type { ComposeOption, EChartsType } from "echarts/core";
 import type { XAXisComponentOption, YAXisComponentOption } from "echarts";
 
-echarts.use([LineChart, ScatterChart, GridComponent, TooltipComponent, DataZoomComponent, MarkLineComponent, CanvasRenderer]);
+echarts.use([
+  CustomChart,
+  LineChart,
+  ScatterChart,
+  GridComponent,
+  TooltipComponent,
+  DataZoomComponent,
+  MarkLineComponent,
+  CanvasRenderer
+]);
 
 const replaceOption = { notMerge: true };
 
 export type ChartOption = ComposeOption<
+  | CustomSeriesOption
   | LineSeriesOption
   | ScatterSeriesOption
   | GridComponentOption

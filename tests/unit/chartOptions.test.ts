@@ -1,27 +1,61 @@
 import { describe, expect, it } from "vitest";
 import { buildPointChartOptions } from "@client/charts/pointChartOptions";
 import { buildStyleChartOptions } from "@client/charts/styleChartOptions";
+import { buildPointTimeline } from "@shared/pointTimeline";
 
 describe("point chart options", () => {
-  it("builds a zoomable line series from point timeline data", () => {
-    const options = buildPointChartOptions([
-      { index: 0, point: 600 },
-      { index: 1, point: 650 }
-    ]);
+  it("builds a source-aligned point graph with room fills and rank guide lines", () => {
+    const timeline = buildPointTimeline({
+      recordsDescending: [
+        {
+          modeId: 12,
+          startTime: 3000,
+          endTime: 4000,
+          players: [{ accountId: 1, score: 25000, level: 10401, gradingScore: 15 }]
+        },
+        {
+          modeId: 16,
+          startTime: 1000,
+          endTime: 2000,
+          players: [{ accountId: 1, score: 45000, level: 10301, gradingScore: 45 }]
+        }
+      ],
+      targetAccountId: 1,
+      initialLevel: 10301,
+      historyLevel: 10203
+    });
+    const options = buildPointChartOptions(timeline);
 
     expect(options.dataZoom).toEqual(
       expect.arrayContaining([expect.objectContaining({ type: "inside" }), expect.objectContaining({ type: "slider" })])
     );
     const series = Array.isArray(options.series) ? options.series : [options.series];
 
-    expect(series).toHaveLength(1);
-    expect(series[0]).toMatchObject({
-      type: "line",
-      data: [
-        [0, 600],
-        [1, 650]
-      ]
-    });
+    expect(options.yAxis).toMatchObject({ min: 0, interval: 1000 });
+    expect(series).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "대국 구간", type: "custom" }),
+        expect.objectContaining({ name: "원점", type: "line" }),
+        expect.objectContaining({ name: "승단선", type: "line" }),
+        expect.objectContaining({
+          name: "포인트",
+          type: "line",
+          data: expect.arrayContaining([
+            expect.objectContaining({ value: [0, 600] }),
+            expect.objectContaining({ value: [1, 645] }),
+            expect.objectContaining({ value: [2, 1415] })
+          ]),
+          markLine: expect.objectContaining({
+            data: expect.arrayContaining([
+              [
+                expect.objectContaining({ name: "호1", coord: [1, 0] }),
+                expect.objectContaining({ coord: [1, 2800] })
+              ]
+            ])
+          })
+        })
+      ])
+    );
   });
 });
 
