@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { Button, ProgressBar, TextField } from "../components/BaseControls";
 import { useErrorToast } from "../components/ErrorToasts";
 import { PlayerAccountPicker, type PlayerAccount } from "../components/PlayerAccountPicker";
+import { ToolCredit } from "../components/ToolCredit";
 
 type SearchResponse = { players?: PlayerAccount[] };
 
@@ -14,6 +15,8 @@ type SniperResponse = {
     metTargetTwo: boolean;
   }>;
 };
+
+const sniperCredits = [{ label: "@AmaeKoromo_MajS", href: "https://amae-koromo.sapk.ch/" }] as const;
 
 async function parseResponse<T>(response: Response, message: string): Promise<T> {
   let body: T | null = null;
@@ -204,6 +207,7 @@ export function SniperDetector() {
           </div>
         </section>
       ) : null}
+      <ToolCredit links={sniperCredits} />
     </section>
   );
 }

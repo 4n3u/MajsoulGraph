@@ -1,6 +1,12 @@
 import { expect, test } from "@playwright/test";
 
 test("searches both targets and renders the sniper analysis result", async ({ page }) => {
+  await page.goto("/sniper");
+  await expect(page.getByRole("link", { name: "@AmaeKoromo_MajS" })).toHaveAttribute(
+    "href",
+    "https://amae-koromo.sapk.ch/"
+  );
+
   await page.route("**/api/search-player**", async (route) => {
     const nickname = new URL(route.request().url()).searchParams.get("nickname");
     const player = nickname === "One"
