@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { Tabs } from "@base-ui/react/tabs";
 import { ToolPlaceholder } from "./ToolPlaceholder";
 
-type ToolId = "points" | "style" | "hand" | "paipu";
+type ToolId = "points" | "style" | "sniper" | "hand" | "paipu";
 
 const HandImageGenerator = lazy(() =>
   import("../features/HandImageGenerator").then((module) => ({ default: module.HandImageGenerator }))
@@ -15,6 +15,9 @@ const PointTrendGraph = lazy(() =>
 );
 const StyleAnalysis = lazy(() =>
   import("../features/StyleAnalysis").then((module) => ({ default: module.StyleAnalysis }))
+);
+const SniperDetector = lazy(() =>
+  import("../features/SniperDetector").then((module) => ({ default: module.SniperDetector }))
 );
 
 const tools: Array<{ id: ToolId; label: string; note: string; path: string }> = [
@@ -29,6 +32,12 @@ const tools: Array<{ id: ToolId; label: string; note: string; path: string }> = 
     label: "사마 스타일 분석",
     note: "플레이 스타일과 경향을 분석하는 기능은 이후 작업에서 구현됩니다.",
     path: "/style"
+  },
+  {
+    id: "sniper",
+    label: "저격 탐지",
+    note: "두 플레이어의 대국 시작 시각과 동석 여부를 비교합니다.",
+    path: "/sniper"
   },
   {
     id: "hand",
@@ -69,6 +78,10 @@ function renderTool(tool: (typeof tools)[number]) {
 
   if (tool.id === "style") {
     return <StyleAnalysis />;
+  }
+
+  if (tool.id === "sniper") {
+    return <SniperDetector />;
   }
 
   return <ToolPlaceholder title={tool.label} description={tool.note} />;

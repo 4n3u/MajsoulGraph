@@ -1,11 +1,14 @@
 import { ApiError } from "../../server/src/api/errors";
 import { getPlayerRecordsResponse, getSearchPlayerResponse } from "../../server/src/api/players";
 import { getPlayerStyleResponse } from "../../server/src/api/style";
+import { getSniperAnalysisResponse } from "../../server/src/api/sniper";
 import { configureAmaeKoromo } from "../../server/src/services/amaeKoromo";
 
 interface Env {
   AMAE_KOROMO_API_KEY?: string;
-  ASSETS: Fetcher;
+  ASSETS: {
+    fetch(request: Request): Promise<Response>;
+  };
 }
 
 function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
@@ -53,6 +56,10 @@ async function handleApiRequest(request: Request): Promise<Response> {
       return jsonResponse(await getPlayerStyleResponse(url.searchParams));
     }
 
+    if (url.pathname === "/api/sniper-analysis") {
+      return jsonResponse(await getSniperAnalysisResponse(url.searchParams));
+    }
+
     return jsonResponse({ error: { code: "not_found", message: "Route not found" } }, { status: 404 });
   } catch (error) {
     return apiErrorResponse(error);
@@ -70,4 +77,4 @@ export default {
 
     return env.ASSETS.fetch(request);
   }
-} satisfies ExportedHandler<Env>;
+} satisfies { fetch(request: Request, env: Env): Promise<Response> };

@@ -1,6 +1,7 @@
 import { createServer, type Server } from "node:http";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { createApp, startServer } from "../../server/src/index";
+import worker from "../../worker/src/index";
 import { ApiError, errorHandler } from "../../server/src/routes/errors";
 import {
   cachedJson,
@@ -246,6 +247,89 @@ describe("Amae-Koromo API routes", () => {
     expect(badStartTime.status).toBe(400);
     expect(badGameModes.status).toBe(400);
     expect(upstreamFetch).not.toHaveBeenCalled();
+  });
+
+  test("analyzes full four-player histories for possible sniping", async () => {
+    const targetOneRecords = [
+      {
+        ...makeGameRecord("target-one-match", 1_000),
+        players: [
+          { accountId: 1, score: 45000, level: 10301, gradingScore: 45 },
+          { accountId: 2, score: 30000, level: 10301, gradingScore: 15 }
+        ]
+      }
+    ];
+    const targetTwoRecords = [makeGameRecord("target-two-nearby", 1_010)];
+    const upstreamFetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(targetOneRecords)))
+      .mockResolvedValueOnce(new Response(JSON.stringify(targetTwoRecords)));
+    vi.stubGlobal("fetch", upstreamFetch);
+
+    const response = await getJson(
+      "/api/sniper-analysis?targetOneId=1&targetOneLatestTimestamp=1000&targetTwoId=2&targetTwoLatestTimestamp=1000&thresholdSeconds=30"
+    );
+
+    expect(response).toEqual({
+      status: 200,
+      body: {
+        suspiciousCount: 1,
+        successfulCount: 1,
+        matches: [
+          { startTime: 1000, nearestDifferenceSeconds: 10, metTargetTwo: true }
+        ]
+      }
+    });
+    expect(upstreamFetch).toHaveBeenNthCalledWith(
+      1,
+      "https://5-data.amae-koromo.com/api/v2/pl4/player_records/1/1000999/1262304000000?limit=500&mode=16%2C15%2C12%2C11%2C9%2C8&descending=true&tag=",
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+    expect(upstreamFetch).toHaveBeenNthCalledWith(
+      2,
+      "https://5-data.amae-koromo.com/api/v2/pl4/player_records/2/1000999/1262304000000?limit=500&mode=16%2C15%2C12%2C11%2C9%2C8&descending=true&tag=",
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+  });
+
+  test("rejects identical target accounts and invalid thresholds before fetching histories", async () => {
+    const upstreamFetch = vi.fn();
+    vi.stubGlobal("fetch", upstreamFetch);
+
+    const sameAccount = await getJson(
+      "/api/sniper-analysis?targetOneId=1&targetOneLatestTimestamp=1000&targetTwoId=1&targetTwoLatestTimestamp=1000&thresholdSeconds=30"
+    );
+    const invalidThreshold = await getJson(
+      "/api/sniper-analysis?targetOneId=1&targetOneLatestTimestamp=1000&targetTwoId=2&targetTwoLatestTimestamp=1000&thresholdSeconds=0"
+    );
+
+    expect(sameAccount).toEqual({
+      status: 400,
+      body: { error: { code: "bad_input", message: "targetOneId and targetTwoId must be different" } }
+    });
+    expect(invalidThreshold).toEqual({
+      status: 400,
+      body: { error: { code: "bad_input", message: "thresholdSeconds must be a positive integer" } }
+    });
+    expect(upstreamFetch).not.toHaveBeenCalled();
+  });
+
+  test("serves sniper analysis through the Worker API route", async () => {
+    const upstreamFetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify([makeGameRecord("target-one", 1_000)])))
+      .mockResolvedValueOnce(new Response(JSON.stringify([makeGameRecord("target-two", 1_010)])));
+    vi.stubGlobal("fetch", upstreamFetch);
+
+    const response = await worker.fetch(
+      new Request(
+        "https://example.test/api/sniper-analysis?targetOneId=1&targetOneLatestTimestamp=1000&targetTwoId=2&targetTwoLatestTimestamp=1000"
+      ),
+      { AMAE_KOROMO_API_KEY: "test-key", ASSETS: { fetch: vi.fn() } }
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ suspiciousCount: 1, successfulCount: 0 });
   });
 
   test("maps malformed search-player upstream bodies to upstream_error", async () => {

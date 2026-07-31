@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { errorHandler } from "./routes/errors";
 import { playersRouter } from "./routes/players";
+import { sniperRouter } from "./routes/sniper";
 import { styleRouter } from "./routes/style";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -35,6 +36,7 @@ export function createApp(options: { clientDist?: string } = {}) {
   });
 
   app.use("/api", playersRouter);
+  app.use("/api", sniperRouter);
   app.use("/api/player-style", styleRouter);
 
   app.use("/api", (_request, response) => {

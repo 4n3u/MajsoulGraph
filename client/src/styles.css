@@ -229,7 +229,8 @@ h1 {
 .converter-form,
 .hand-generator-form,
 .point-trend-form,
-.style-analysis-form {
+.style-analysis-form,
+.sniper-form {
   display: grid;
   gap: 10px;
 }
@@ -826,6 +827,79 @@ h1 {
   grid-template-columns: minmax(190px, 1fr) 180px auto;
 }
 
+.sniper-form-grid {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) 120px auto;
+}
+
+.sniper-caveat {
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+  margin: 16px 0 0;
+}
+
+.sniper-picker .account-picker {
+  margin-top: 18px;
+}
+
+.sniper-results {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.sniper-summary {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.sniper-summary div {
+  border-left: 3px solid var(--border-subtle);
+  padding: 4px 0 4px 12px;
+}
+
+.sniper-summary dt {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.sniper-summary dd {
+  color: var(--text);
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.sniper-table-wrap {
+  overflow-x: auto;
+}
+
+.sniper-table-wrap table {
+  border-collapse: collapse;
+  min-width: 520px;
+  width: 100%;
+}
+
+.sniper-table-wrap th,
+.sniper-table-wrap td {
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.875rem;
+  padding: 10px 8px;
+  text-align: left;
+}
+
+.sniper-table-wrap th {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
 .account-picker {
   border-top: 1px solid var(--border-subtle);
   display: grid;
@@ -1018,7 +1092,8 @@ h1 {
   .input-row,
   .result-meta,
   .point-form-grid,
-  .style-form-grid {
+  .style-form-grid,
+  .sniper-form-grid {
     grid-template-columns: 1fr;
   }
 
