@@ -1,8 +1,10 @@
 import { ApiError } from "../../server/src/api/errors";
 import { getPlayerRecordsResponse, getSearchPlayerResponse } from "../../server/src/api/players";
 import { getPlayerStyleResponse } from "../../server/src/api/style";
+import { configureAmaeKoromo } from "../../server/src/services/amaeKoromo";
 
 interface Env {
+  AMAE_KOROMO_API_KEY?: string;
   ASSETS: Fetcher;
 }
 
@@ -62,6 +64,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname.startsWith("/api/")) {
+      configureAmaeKoromo({ apiKey: env.AMAE_KOROMO_API_KEY });
       return handleApiRequest(request);
     }
 

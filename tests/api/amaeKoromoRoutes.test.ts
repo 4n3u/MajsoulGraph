@@ -2,7 +2,12 @@ import { createServer, type Server } from "node:http";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { createApp, startServer } from "../../server/src/index";
 import { ApiError, errorHandler } from "../../server/src/routes/errors";
-import { cachedJson, clearAmaeKoromoCache } from "../../server/src/services/amaeKoromo";
+import {
+  cachedJson,
+  clearAmaeKoromoCache,
+  configureAmaeKoromo,
+  resetAmaeKoromoClient
+} from "../../server/src/services/amaeKoromo";
 
 type JsonResponse = {
   status: number;
@@ -69,18 +74,20 @@ async function getJson(path: string): Promise<JsonResponse> {
 describe("Amae-Koromo API routes", () => {
   beforeEach(() => {
     clearAmaeKoromoCache();
+    configureAmaeKoromo({ apiKey: "test-key" });
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
   afterEach(() => {
     clearAmaeKoromoCache();
+    resetAmaeKoromoClient();
     vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
-  test("normalizes search-player results from upstream latest_timestamp", async () => {
+  test("sends the configured authentication header when searching players", async () => {
     const upstreamFetch = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify([
@@ -110,8 +117,30 @@ describe("Amae-Koromo API routes", () => {
     });
     expect(upstreamFetch).toHaveBeenCalledWith(
       "https://5-data.amae-koromo.com/api/v2/pl4/search_player/Alice",
-      expect.objectContaining({ signal: expect.any(AbortSignal) })
+      expect.objectContaining({
+        headers: { Authorization: "Bearer test-key" },
+        signal: expect.any(AbortSignal)
+      })
     );
+  });
+
+  test("returns a normalized configuration error before calling upstream without an API key", async () => {
+    const upstreamFetch = vi.fn();
+    vi.stubGlobal("fetch", upstreamFetch);
+    configureAmaeKoromo({ apiKey: "   " });
+
+    const response = await getJson("/api/search-player?mode=pl4&nickname=Alice");
+
+    expect(response).toEqual({
+      status: 500,
+      body: {
+        error: {
+          code: "internal_error",
+          message: "Amae-Koromo service is not configured"
+        }
+      }
+    });
+    expect(upstreamFetch).not.toHaveBeenCalled();
   });
 
   test("startServer keeps a listening API server handle", async () => {
@@ -308,15 +337,70 @@ describe("Amae-Koromo API routes", () => {
     expect(upstreamFetch).toHaveBeenCalledTimes(2);
   });
 
-  test("evicts the oldest cached JSON entry when cache reaches its max size", async () => {
+  test("spaces uncached fetch starts without wasting a queued slot on a cache hit", async () => {
+    vi.useFakeTimers();
     const upstreamFetch = vi.fn((url: string) => Promise.resolve(new Response(JSON.stringify({ url }))));
     vi.stubGlobal("fetch", upstreamFetch);
 
-    await cachedJson("https://example.test/first");
-    for (let index = 0; index < 100; index += 1) {
-      await cachedJson(`https://example.test/${index}`);
-    }
-    await cachedJson("https://example.test/first");
+    const first = cachedJson("https://example.test/first");
+    const cachedFollower = cachedJson("https://example.test/first");
+    const second = cachedJson("https://example.test/second");
+
+    await vi.advanceTimersByTimeAsync(999);
+    expect(upstreamFetch).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(upstreamFetch).toHaveBeenCalledTimes(2);
+    expect(upstreamFetch).toHaveBeenNthCalledWith(
+      2,
+      "https://example.test/second",
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+
+    await Promise.all([first, cachedFollower, second]);
+  });
+
+  test("starts the abort timeout only when a queued fetch begins", async () => {
+    vi.useFakeTimers();
+    const upstreamFetch = vi.fn((_url: string, init?: RequestInit) => {
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
+      });
+    });
+    vi.stubGlobal("fetch", upstreamFetch);
+
+    const first = cachedJson("https://example.test/first");
+    const second = cachedJson("https://example.test/second");
+    const firstTimeout = expect(first).rejects.toMatchObject({ code: "upstream_timeout" });
+    const secondTimeout = expect(second).rejects.toMatchObject({ code: "upstream_timeout" });
+
+    await vi.advanceTimersByTimeAsync(1_000);
+    const secondSignal = upstreamFetch.mock.calls[1]?.[1]?.signal;
+    expect(secondSignal?.aborted).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(9_000);
+    expect(secondSignal?.aborted).toBe(false);
+    await firstTimeout;
+
+    await vi.advanceTimersByTimeAsync(1_000);
+    await secondTimeout;
+  });
+
+  test("evicts the oldest cached JSON entry when cache reaches its max size", async () => {
+    vi.useFakeTimers();
+    const upstreamFetch = vi.fn((url: string) => Promise.resolve(new Response(JSON.stringify({ url }))));
+    vi.stubGlobal("fetch", upstreamFetch);
+
+    const initialRequests = [
+      cachedJson("https://example.test/first"),
+      ...Array.from({ length: 100 }, (_, index) => cachedJson(`https://example.test/${index}`))
+    ];
+    await vi.advanceTimersByTimeAsync(100_000);
+    await Promise.all(initialRequests);
+
+    const refreshed = cachedJson("https://example.test/first");
+    await vi.advanceTimersByTimeAsync(1_000);
+    await refreshed;
 
     expect(upstreamFetch).toHaveBeenCalledTimes(102);
   });

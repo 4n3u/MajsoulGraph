@@ -7,6 +7,10 @@ type CacheEntry = {
   value: unknown;
 };
 
+type AmaeKoromoConfig = {
+  apiKey?: string;
+};
+
 type UpstreamPlayer = {
   id: number;
   level?: {
@@ -50,7 +54,15 @@ type PlayerRecord = {
 const cache = new Map<string, CacheEntry>();
 const cacheTtlMs = 60_000;
 const maxCacheEntries = 100;
+const minimumRequestIntervalMs = 1_000;
 const requestTimeoutMs = 10_000;
+const runtimeProcess = globalThis as typeof globalThis & {
+  process?: { env?: Record<string, string | undefined> };
+};
+let amaeKoromoApiKey = runtimeProcess.process?.env?.AMAE_KOROMO_API_KEY;
+let nextRequestStartAt = 0;
+let requestSlotTail: Promise<void> = Promise.resolve();
+let releaseActiveRequestSlot: (() => void) | undefined;
 
 function apiBase(mode: Mode): string {
   return `https://5-data.amae-koromo.com/api/v2/${mode}/`;
@@ -70,6 +82,15 @@ function requireText(value: unknown, name: string): string {
 
 function upstreamShapeError(): ApiError {
   return new ApiError(502, "upstream_error", "Amae-Koromo request failed");
+}
+
+function configuredApiKey(): string {
+  const apiKey = amaeKoromoApiKey?.trim();
+  if (!apiKey) {
+    throw new ApiError(500, "internal_error", "Amae-Koromo service is not configured");
+  }
+
+  return apiKey;
 }
 
 function requirePositiveSafeIntegerText(value: unknown, name: string): string {
@@ -222,8 +243,44 @@ function isAbortError(error: unknown, signal: AbortSignal): boolean {
   return signal.aborted || (error instanceof DOMException && error.name === "AbortError");
 }
 
+async function waitForAmaeKoromoRequestSlot(): Promise<void> {
+  const previousSlot = requestSlotTail;
+  let releaseSlot!: () => void;
+  requestSlotTail = new Promise<void>((resolve) => {
+    releaseSlot = resolve;
+  });
+
+  await previousSlot;
+  releaseActiveRequestSlot = releaseSlot;
+
+  const delay = nextRequestStartAt - Date.now();
+  if (delay > 0) {
+    await new Promise<void>((resolve) => setTimeout(resolve, delay));
+  }
+}
+
+function releaseAmaeKoromoRequestSlot(): void {
+  const releaseSlot = releaseActiveRequestSlot;
+  releaseActiveRequestSlot = undefined;
+  releaseSlot?.();
+}
+
+function startAmaeKoromoRequest(): void {
+  nextRequestStartAt = Date.now() + minimumRequestIntervalMs;
+  releaseAmaeKoromoRequestSlot();
+}
+
 export function clearAmaeKoromoCache(): void {
   cache.clear();
+}
+
+export function configureAmaeKoromo(config: AmaeKoromoConfig): void {
+  amaeKoromoApiKey = config.apiKey;
+}
+
+export function resetAmaeKoromoClient(): void {
+  amaeKoromoApiKey = runtimeProcess.process?.env?.AMAE_KOROMO_API_KEY;
+  nextRequestStartAt = 0;
 }
 
 export async function cachedJson<T>(url: string): Promise<T> {
@@ -231,15 +288,29 @@ export async function cachedJson<T>(url: string): Promise<T> {
   const now = Date.now();
   if (cached && cached.expiresAt > now) return cached.value as T;
 
+  const apiKey = configuredApiKey();
+
+  await waitForAmaeKoromoRequestSlot();
+
+  const cachedAfterWaiting = cache.get(url);
+  if (cachedAfterWaiting && cachedAfterWaiting.expiresAt > Date.now()) {
+    releaseAmaeKoromoRequestSlot();
+    return cachedAfterWaiting.value as T;
+  }
+
+  startAmaeKoromoRequest();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
 
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      signal: controller.signal
+    });
     if (!response.ok) throw new ApiError(502, "upstream_error", "Amae-Koromo request failed");
 
     const value = (await response.json()) as T;
-    writeCache(url, value, now);
+    writeCache(url, value, Date.now());
     return value;
   } catch (error) {
     if (error instanceof ApiError) throw error;

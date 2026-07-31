@@ -1,7 +1,11 @@
 import { createServer, type Server } from "node:http";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { createApp } from "../../server/src/index";
-import { clearAmaeKoromoCache } from "../../server/src/services/amaeKoromo";
+import {
+  clearAmaeKoromoCache,
+  configureAmaeKoromo,
+  resetAmaeKoromoClient
+} from "../../server/src/services/amaeKoromo";
 
 type JsonResponse = {
   status: number;
@@ -85,12 +89,14 @@ function makeRecords(count: number, newestStartTime: number): ReturnType<typeof 
 describe("player style API route", () => {
   beforeEach(() => {
     clearAmaeKoromoCache();
+    configureAmaeKoromo({ apiKey: "test-key" });
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
   afterEach(() => {
     clearAmaeKoromoCache();
+    resetAmaeKoromoClient();
     vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();

@@ -41,3 +41,13 @@ Cloudflare 설정은 `wrangler.jsonc`에 있습니다. `/api/*`는 Worker가 처
 - [iriscatx](https://x.com/iriscatx)
 - [yuraku_urame](https://x.com/yuraku_urame)
 - [AmaeKoromo_MajS](https://amae-koromo.sapk.ch/)
+
+## Amae-Koromo API key
+
+The Node server reads `AMAE_KOROMO_API_KEY` from its environment. For local development, copy `.env.example` to `.env`, set the key there, and load it through your preferred environment-variable workflow. In Render, add `AMAE_KOROMO_API_KEY` as a secret environment variable in the service settings.
+
+For Cloudflare Workers, store the key as a Wrangler secret before deploying:
+
+```bash
+wrangler secret put AMAE_KOROMO_API_KEY
+```

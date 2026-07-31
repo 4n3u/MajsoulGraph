@@ -126,6 +126,7 @@ export async function getPlayerStyleResponse(query: QuerySource): Promise<unknow
     throw new ApiError(404, "player_not_found", "Player latest timestamp not found");
   }
 
+  const to = Date.now();
   let from = defaultFrom;
   if (count !== undefined) {
     const records = await fetchRecentStyleRecords(player.id, player.latestTimestamp, count);
@@ -142,7 +143,6 @@ export async function getPlayerStyleResponse(query: QuerySource): Promise<unknow
     from = Number(`${lastRecord.startTime}000`);
   }
 
-  const to = Date.now();
   const rawStats = await fetchPlayerExtendedStats(player.id, from, to, styleGameMode);
   const processed = processStats(rawStats);
   const point = calculateCoordinates(getStandardizedStats(processed));
