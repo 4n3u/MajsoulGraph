@@ -55,7 +55,7 @@ export function createApp(options: { clientDist?: string } = {}) {
 }
 
 export function startServer(options: StartServerOptions = {}): Server {
-  const port = options.port ?? Number(process.env.PORT ?? 11000);
+  const port = options.port ?? Number(process.env.PORT ?? 11001);
   const host = options.host ?? "0.0.0.0";
   const log = options.log ?? console.log;
   const server = createApp({ clientDist: options.clientDist }).listen(port, host, () => {

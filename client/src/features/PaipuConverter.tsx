@@ -8,6 +8,7 @@ import {
 } from "@shared/paipu";
 import { Button, TextField } from "../components/BaseControls";
 import { useErrorToast, useSuccessToast } from "../components/ErrorToasts";
+import { ToolCredit } from "../components/ToolCredit";
 
 type ConversionResult = {
   accountId: number;
@@ -165,6 +166,8 @@ export function PaipuConverter() {
           </dl>
         </section>
       ) : null}
+
+      <ToolCredit />
     </section>
   );
 }

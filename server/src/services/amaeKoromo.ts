@@ -54,6 +54,7 @@ type PlayerRecord = {
 const cache = new Map<string, CacheEntry>();
 const cacheTtlMs = 60_000;
 const maxCacheEntries = 100;
+const amaeKoromoMaxRecordPageSize = 150;
 const minimumRequestIntervalMs = 1_000;
 const requestTimeoutMs = 10_000;
 const runtimeProcess = globalThis as typeof globalThis & {
@@ -362,10 +363,13 @@ export async function fetchPlayerRecords(
       `${apiBase(mode)}player_records/${encodeURIComponent(normalizedPlayerId)}/${cursor}999/1262304000000` +
       `?limit=${limit}&mode=${encodeURIComponent(normalizedGameModes)}&descending=true&tag=`;
     const games = assertPlayerRecords(await cachedJson<unknown>(url));
+    if (games.length === 0) break;
+
     records.push(...games);
 
+    if (games.length < Math.min(limit, amaeKoromoMaxRecordPageSize)) break;
+
     const lastGame = games.at(-1);
-    if (games.length < limit || limit < 500) break;
     const lastStartTime = lastGame?.startTime;
     if (typeof lastStartTime !== "number" || !Number.isSafeInteger(lastStartTime)) throw upstreamShapeError();
     cursor = lastStartTime - 1;

@@ -405,6 +405,59 @@ describe("Amae-Koromo API routes", () => {
     );
   });
 
+  test("paginates upstream 150-record capped pages until fewer than 150 records are returned", async () => {
+    const firstPage = Array.from({ length: 150 }, (_, index) => makeGameRecord(`game-p1-${index}`, 1700000150 - index));
+    const secondPage = Array.from({ length: 128 }, (_, index) => makeGameRecord(`game-p2-${index}`, 1700000000 - index));
+    const upstreamFetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(firstPage), { status: 200, headers: { "content-type": "application/json" } })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(secondPage), { status: 200, headers: { "content-type": "application/json" } })
+      );
+    vi.stubGlobal("fetch", upstreamFetch);
+
+    const response = await getJson(
+      "/api/player-records?mode=pl4&playerId=42&startTime=1700000150&gameModes=16"
+    );
+
+    expect(response.status).toBe(200);
+    expect((response.body as { records: unknown[] }).records).toHaveLength(278);
+    expect(upstreamFetch).toHaveBeenCalledTimes(2);
+    expect(upstreamFetch).toHaveBeenNthCalledWith(
+      1,
+      "https://5-data.amae-koromo.com/api/v2/pl4/player_records/42/1700000150999/1262304000000?limit=500&mode=16&descending=true&tag=",
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+    expect(upstreamFetch).toHaveBeenNthCalledWith(
+      2,
+      "https://5-data.amae-koromo.com/api/v2/pl4/player_records/42/1700000000999/1262304000000?limit=500&mode=16&descending=true&tag=",
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+  });
+
+  test("stops pagination gracefully when an upstream page returns empty array", async () => {
+    const firstPage = Array.from({ length: 150 }, (_, index) => makeGameRecord(`game-${index}`, 1700000150 - index));
+    const upstreamFetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(firstPage), { status: 200, headers: { "content-type": "application/json" } })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify([]), { status: 200, headers: { "content-type": "application/json" } })
+      );
+    vi.stubGlobal("fetch", upstreamFetch);
+
+    const response = await getJson(
+      "/api/player-records?mode=pl4&playerId=42&startTime=1700000150&gameModes=16"
+    );
+
+    expect(response.status).toBe(200);
+    expect((response.body as { records: unknown[] }).records).toHaveLength(150);
+    expect(upstreamFetch).toHaveBeenCalledTimes(2);
+  });
+
   test("clearAmaeKoromoCache isolates cached upstream responses", async () => {
     const upstreamFetch = vi
       .fn()

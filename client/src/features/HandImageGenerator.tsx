@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { parsePaiGroups, type ParsedTile } from "@shared/handParser";
 import { Button, CheckboxField, TextField } from "../components/BaseControls";
 import { useErrorToast } from "../components/ErrorToasts";
+import { ToolCredit } from "../components/ToolCredit";
 
 type TileRenderData = ParsedTile & {
   image: HTMLImageElement;
@@ -265,6 +266,8 @@ export function HandImageGenerator() {
         </div>
         <canvas ref={canvasRef} aria-label="생성된 손패 이미지" />
       </div>
+
+      <ToolCredit />
     </section>
   );
 }

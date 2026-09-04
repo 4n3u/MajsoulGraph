@@ -192,7 +192,9 @@ describe("player style API route", () => {
     );
     expect(upstreamFetch).toHaveBeenNthCalledWith(
       3,
-      "https://5-data.amae-koromo.com/api/v2/pl4/player_extended_stats/456/1700000000000/1780963200000?mode=16.12.9&tag=",
+      expect.stringMatching(
+        /^https:\/\/5-data\.amae-koromo\.com\/api\/v2\/pl4\/player_extended_stats\/456\/1700000000000\/178096320\d{4}\?mode=16\.12\.9&tag=$/
+      ),
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
   });
@@ -233,7 +235,9 @@ describe("player style API route", () => {
     );
     expect(upstreamFetch).toHaveBeenNthCalledWith(
       2,
-      "https://5-data.amae-koromo.com/api/v2/pl4/player_extended_stats/456/1700000000000/1780963200000?mode=16.12.9&tag=",
+      expect.stringMatching(
+        /^https:\/\/5-data\.amae-koromo\.com\/api\/v2\/pl4\/player_extended_stats\/456\/1700000000000\/178096320\d{4}\?mode=16\.12\.9&tag=$/
+      ),
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
   });
@@ -293,7 +297,9 @@ describe("player style API route", () => {
     );
     expect(upstreamFetch).toHaveBeenNthCalledWith(
       3,
-      "https://5-data.amae-koromo.com/api/v2/pl4/player_extended_stats/789/1700000501000/1780963200000?mode=16.12.9&tag=",
+      expect.stringMatching(
+        /^https:\/\/5-data\.amae-koromo\.com\/api\/v2\/pl4\/player_extended_stats\/789\/1700000501000\/178096320\d{4}\?mode=16\.12\.9&tag=$/
+      ),
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
   });
@@ -347,7 +353,9 @@ describe("player style API route", () => {
     );
     expect(upstreamFetch).toHaveBeenNthCalledWith(
       4,
-      "https://5-data.amae-koromo.com/api/v2/pl4/player_extended_stats/790/1700000500000/1780963200000?mode=16.12.9&tag=",
+      expect.stringMatching(
+        /^https:\/\/5-data\.amae-koromo\.com\/api\/v2\/pl4\/player_extended_stats\/790\/1700000500000\/178096320\d{4}\?mode=16\.12\.9&tag=$/
+      ),
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
   });
