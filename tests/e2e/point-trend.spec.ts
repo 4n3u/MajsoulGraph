@@ -136,12 +136,19 @@ test("generates point trend chart from mocked player records", async ({ page }) 
   await expect.poll(async () => page.locator("body").textContent()).not.toContain("undefined");
   await expect.poll(async () => page.locator("body").textContent()).not.toContain("날짜: -");
   await expect(result.locator(".point-summary")).toHaveCount(0);
+  await expect(result.getByRole("heading", { name: "순위 분포" })).toBeVisible();
+  await expect(result.getByText("1전 ~ 2전 (총 2판)")).toBeVisible();
+  await expect(result.getByRole("img", { name: "순위 분포 원형 그래프" })).toBeVisible();
   await expect(result.getByRole("heading", { name: "단위전 이력" })).toBeVisible();
   await expect(result.getByText("걸1 (1 +1 +0 +0)=2판")).toBeVisible();
   await expect(result.getByText("평균 순위 1.500")).toBeVisible();
   await expect(result.getByText("최고 pt 650")).toBeVisible();
   await expect(result.getByText("최저 pt 600")).toBeVisible();
-  await expect(result.getByText("4왕반 2판")).toBeVisible();
+  const rankPeriodRow = result.locator(".rank-history-row", { hasText: "걸1" });
+  await expect(rankPeriodRow).toBeVisible();
+  await rankPeriodRow.click();
+  await expect(rankPeriodRow).toHaveClass(/is-selected/);
+  await expect(result.getByText("1전 ~ 2전 (총 2판)")).toBeVisible();
 
   expect(requestedUrls).toHaveLength(2);
   expect(requestedUrls[0]).toContain("/api/search-player?");

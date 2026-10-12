@@ -1,13 +1,19 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createPointTimelineProcessor,
   type GameRecord,
   type PointTimelineInput,
+  type RankPeriodSummary,
   type TimelineResult
 } from "@shared/pointTimeline";
 import { gameModeLabels, type GameModeId } from "@shared/mahjongModes";
-import { EChart } from "../charts/EChart";
+import { EChart, type EChartsType } from "../charts/EChart";
 import { buildPointChartOptions } from "../charts/pointChartOptions";
+import {
+  buildRankPieChartOptions,
+  calculateRankDistribution,
+  extractDataZoomRange
+} from "../charts/rankPieChartOptions";
 import { Button, ProgressBar, SelectField, TextField } from "../components/BaseControls";
 import { useErrorToast } from "../components/ErrorToasts";
 import { PlayerAccountPicker, type PlayerAccount } from "../components/PlayerAccountPicker";
@@ -187,6 +193,7 @@ export function PointTrendGraph() {
   const [playerCandidates, setPlayerCandidates] = useState<PlayerAccount[]>([]);
   const [progress, setProgress] = useState<LoadingProgress | null>(null);
   const [timeline, setTimeline] = useState<TimelineResult | null>(null);
+  const [selectedRange, setSelectedRange] = useState<{ startIndex: number; endIndex: number } | null>(null);
   const requestIdRef = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
   const showError = useErrorToast();
@@ -203,6 +210,67 @@ export function PointTrendGraph() {
     return timeline ? buildPointChartOptions(timeline) : null;
   }, [timeline]);
 
+  const rankDistribution = useMemo(() => {
+    if (!timeline || timeline.summary.gameCount === 0) return null;
+    const range = selectedRange ?? { startIndex: 1, endIndex: timeline.summary.gameCount };
+    return calculateRankDistribution(timeline.points, range.startIndex, range.endIndex);
+  }, [timeline, selectedRange]);
+
+  const pieChartOptions = useMemo(() => {
+    if (!rankDistribution) return null;
+    return buildRankPieChartOptions(rankDistribution, mode === "삼마");
+  }, [rankDistribution, mode]);
+
+  const handleDataZoom = useCallback(
+    (event: unknown) => {
+      if (!timeline || timeline.summary.gameCount === 0) return;
+      const nextRange = extractDataZoomRange(event, timeline.summary.gameCount);
+      setSelectedRange((prev) => {
+        if (prev && prev.startIndex === nextRange.startIndex && prev.endIndex === nextRange.endIndex) {
+          return prev;
+        }
+        return nextRange;
+      });
+    },
+    [timeline]
+  );
+
+  const pointChartEvents = useMemo(
+    () => ({
+      datazoom: handleDataZoom
+    }),
+    [handleDataZoom]
+  );
+
+  const pointChartInstanceRef = useRef<EChartsType | null>(null);
+
+  const handlePeriodClick = useCallback(
+    (period: RankPeriodSummary) => {
+      if (!timeline) return;
+
+      const isCurrent =
+        selectedRange?.startIndex === period.indexStart &&
+        selectedRange?.endIndex === period.indexEnd;
+
+      if (isCurrent) {
+        setSelectedRange({ startIndex: 1, endIndex: timeline.summary.gameCount });
+        pointChartInstanceRef.current?.dispatchAction({
+          type: "dataZoom",
+          startValue: 0,
+          endValue: timeline.summary.gameCount
+        });
+      } else {
+        setSelectedRange({ startIndex: period.indexStart, endIndex: period.indexEnd });
+        pointChartInstanceRef.current?.dispatchAction({
+          type: "dataZoom",
+          startValue: Math.max(0, period.indexStart - 1),
+          endValue: period.indexEnd
+        });
+      }
+    },
+    [timeline, selectedRange]
+  );
+
   async function analyzePlayer(player: PlayerAccount, config: ModeConfig) {
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
@@ -213,6 +281,7 @@ export function PointTrendGraph() {
 
     try {
       setTimeline(null);
+      setSelectedRange(null);
       setPlayerCandidates([]);
 
       if (typeof player.latestTimestamp !== "number") {
@@ -264,6 +333,7 @@ export function PointTrendGraph() {
 
       if (isCurrentRequest()) {
         setTimeline(nextTimeline);
+        setSelectedRange({ startIndex: 1, endIndex: nextTimeline.summary.gameCount });
         setProgress(null);
         if (abortControllerRef.current === abortController) {
           abortControllerRef.current = null;
@@ -272,6 +342,7 @@ export function PointTrendGraph() {
     } catch (analysisError) {
       if (isCurrentRequest()) {
         setTimeline(null);
+        setSelectedRange(null);
         setProgress(null);
         showError(analysisError instanceof Error ? analysisError.message : "포인트 추이 그래프를 생성할 수 없습니다.");
         if (abortControllerRef.current === abortController) {
@@ -286,6 +357,7 @@ export function PointTrendGraph() {
 
     const trimmedNickname = nickname.trim();
     setTimeline(null);
+    setSelectedRange(null);
     setPlayerCandidates([]);
 
     if (!trimmedNickname) {
@@ -342,6 +414,7 @@ export function PointTrendGraph() {
     } catch (submitError) {
       if (isCurrentRequest()) {
         setTimeline(null);
+        setSelectedRange(null);
         setProgress(null);
         showError(submitError instanceof Error ? submitError.message : "포인트 추이 그래프를 생성할 수 없습니다.");
         if (abortControllerRef.current === abortController) {
@@ -404,25 +477,104 @@ export function PointTrendGraph() {
 
       {timeline && chartOptions ? (
         <section className="point-results" aria-label="포인트 추이 결과">
-          <EChart className="point-chart" option={chartOptions} ariaLabel="포인트 추이 그래프" />
+          <EChart
+            className="point-chart"
+            option={chartOptions}
+            ariaLabel="포인트 추이 그래프"
+            onEvents={pointChartEvents}
+            onChartReady={(chart) => {
+              pointChartInstanceRef.current = chart;
+            }}
+          />
+
+          {rankDistribution && pieChartOptions ? (
+            <section className="rank-distribution" aria-labelledby="rank-distribution-title">
+              <div className="rank-distribution-header">
+                <h3 id="rank-distribution-title">순위 분포</h3>
+                <span className="rank-distribution-range">
+                  {rankDistribution.startIndex}전 ~ {rankDistribution.endIndex}전 (총 {rankDistribution.totalGames}판)
+                </span>
+              </div>
+
+              <div className="rank-distribution-body">
+                <EChart className="rank-pie-chart" option={pieChartOptions} ariaLabel="순위 분포 원형 그래프" />
+
+                <div className="rank-distribution-stats">
+                  <div className="rank-stat-item">
+                    <span className="rank-stat-label">평균 순위</span>
+                    <strong className="rank-stat-value">
+                      {rankDistribution.totalGames > 0 ? `${rankDistribution.averageRank.toFixed(3)}위` : "-"}
+                    </strong>
+                  </div>
+                  <div className="rank-stat-item">
+                    <span className="rank-stat-label">1위</span>
+                    <strong className="rank-stat-value">
+                      {rankDistribution.rankCounts[1]}판 ({rankDistribution.totalGames > 0 ? ((rankDistribution.rankCounts[1] / rankDistribution.totalGames) * 100).toFixed(1) : "0.0"}%)
+                    </strong>
+                  </div>
+                  <div className="rank-stat-item">
+                    <span className="rank-stat-label">2위</span>
+                    <strong className="rank-stat-value">
+                      {rankDistribution.rankCounts[2]}판 ({rankDistribution.totalGames > 0 ? ((rankDistribution.rankCounts[2] / rankDistribution.totalGames) * 100).toFixed(1) : "0.0"}%)
+                    </strong>
+                  </div>
+                  <div className="rank-stat-item">
+                    <span className="rank-stat-label">3위</span>
+                    <strong className="rank-stat-value">
+                      {rankDistribution.rankCounts[3]}판 ({rankDistribution.totalGames > 0 ? ((rankDistribution.rankCounts[3] / rankDistribution.totalGames) * 100).toFixed(1) : "0.0"}%)
+                    </strong>
+                  </div>
+                  {mode !== "삼마" ? (
+                    <div className="rank-stat-item">
+                      <span className="rank-stat-label">4위</span>
+                      <strong className="rank-stat-value">
+                        {rankDistribution.rankCounts[4]}판 ({rankDistribution.totalGames > 0 ? ((rankDistribution.rankCounts[4] / rankDistribution.totalGames) * 100).toFixed(1) : "0.0"}%)
+                      </strong>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </section>
+          ) : null}
 
           <section className="rank-history" aria-labelledby="rank-history-title">
             <h3 id="rank-history-title">단위전 이력</h3>
             <div className="rank-history-list">
-              {timeline.rankPeriods.map((period) => (
-                <div className="rank-history-row" key={`${period.level}-${period.indexStart}-${period.startTime}`}>
-                  <span>
-                    {formatDate(period.startTime)} - {formatDate(period.endTime)} ({period.periodDays}일)
-                  </span>
-                  <strong>
-                    {period.levelLabel} ({formatRankBreakdown(period.rankCounts)})={period.gameCount}판
-                  </strong>
-                  <span>평균 순위 {period.averageRank.toFixed(3)}</span>
-                  <span>최고 pt {period.highPoint}</span>
-                  <span>최저 pt {period.lowPoint}</span>
-                  <span>{formatModeCounts(period.modeCounts)}</span>
-                </div>
-              ))}
+              {timeline.rankPeriods.map((period) => {
+                const isSelected =
+                  selectedRange !== null &&
+                  selectedRange.startIndex === period.indexStart &&
+                  selectedRange.endIndex === period.indexEnd;
+
+                return (
+                  <div
+                    className={`rank-history-row ${isSelected ? "is-selected" : ""}`}
+                    key={`${period.level}-${period.indexStart}-${period.startTime}`}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${period.levelLabel} 기간 대국 범위 선택`}
+                    aria-pressed={isSelected}
+                    onClick={() => handlePeriodClick(period)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        handlePeriodClick(period);
+                      }
+                    }}
+                  >
+                    <span>
+                      {formatDate(period.startTime)} - {formatDate(period.endTime)} ({period.periodDays}일)
+                    </span>
+                    <strong>
+                      {period.levelLabel} ({formatRankBreakdown(period.rankCounts)})={period.gameCount}판
+                    </strong>
+                    <span>평균 순위 {period.averageRank.toFixed(3)}</span>
+                    <span>최고 pt {period.highPoint}</span>
+                    <span>최저 pt {period.lowPoint}</span>
+                    <span>{formatModeCounts(period.modeCounts)}</span>
+                  </div>
+                );
+              })}
             </div>
           </section>
         </section>

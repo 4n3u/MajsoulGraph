@@ -1,8 +1,14 @@
 import { useEffect, useRef } from "react";
-import type { CustomSeriesOption, LineSeriesOption, ScatterSeriesOption } from "echarts/charts";
+import type {
+  CustomSeriesOption,
+  LineSeriesOption,
+  PieSeriesOption,
+  ScatterSeriesOption
+} from "echarts/charts";
 import {
   type DataZoomComponentOption,
   type GridComponentOption,
+  type LegendComponentOption,
   type MarkLineComponentOption,
   type TooltipComponentOption
 } from "echarts/components";
@@ -23,10 +29,12 @@ function loadEcharts(): Promise<typeof import("echarts/core")> {
       charts.CustomChart,
       charts.LineChart,
       charts.ScatterChart,
+      charts.PieChart,
       components.GridComponent,
       components.TooltipComponent,
       components.DataZoomComponent,
       components.MarkLineComponent,
+      components.LegendComponent,
       renderers.CanvasRenderer
     ]);
 
@@ -40,24 +48,35 @@ export type ChartOption = ComposeOption<
   | CustomSeriesOption
   | LineSeriesOption
   | ScatterSeriesOption
+  | PieSeriesOption
   | GridComponentOption
   | TooltipComponentOption
   | DataZoomComponentOption
   | MarkLineComponentOption
+  | LegendComponentOption
   | XAXisComponentOption
   | YAXisComponentOption
 >;
+
+export type { EChartsType } from "echarts/core";
 
 type EChartProps = {
   option: ChartOption;
   className?: string;
   ariaLabel?: string;
+  onEvents?: Record<string, (params: unknown) => void>;
+  onChartReady?: (chart: EChartsType) => void;
 };
 
-export function EChart({ option, className, ariaLabel = "Chart" }: EChartProps) {
+export function EChart({ option, className, ariaLabel = "Chart", onEvents, onChartReady }: EChartProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<EChartsType | null>(null);
   const optionRef = useRef(option);
+  const onEventsRef = useRef(onEvents);
+  onEventsRef.current = onEvents;
+  const onChartReadyRef = useRef(onChartReady);
+  onChartReadyRef.current = onChartReady;
+  const registeredEventsRef = useRef<string[]>([]);
 
   useEffect(() => {
     let disposed = false;
@@ -71,6 +90,15 @@ export function EChart({ option, className, ariaLabel = "Chart" }: EChartProps) 
       const chart = echarts.init(containerRef.current);
       chartRef.current = chart;
       chart.setOption(optionRef.current, replaceOption);
+      onChartReadyRef.current?.(chart);
+
+      if (onEventsRef.current) {
+        for (const [event, handler] of Object.entries(onEventsRef.current)) {
+          chart.on(event, handler);
+          registeredEventsRef.current.push(event);
+        }
+      }
+
       const container = containerRef.current;
 
       const handleResize = () => {
@@ -91,6 +119,7 @@ export function EChart({ option, className, ariaLabel = "Chart" }: EChartProps) 
         window.removeEventListener("resize", handleResize);
         chart.dispose();
         chartRef.current = null;
+        registeredEventsRef.current = [];
       };
     });
 
@@ -99,6 +128,23 @@ export function EChart({ option, className, ariaLabel = "Chart" }: EChartProps) 
       cleanup?.();
     };
   }, []);
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    for (const event of registeredEventsRef.current) {
+      chart.off(event);
+    }
+    registeredEventsRef.current = [];
+
+    if (onEvents) {
+      for (const [event, handler] of Object.entries(onEvents)) {
+        chart.on(event, handler);
+        registeredEventsRef.current.push(event);
+      }
+    }
+  }, [onEvents]);
 
   useEffect(() => {
     optionRef.current = option;

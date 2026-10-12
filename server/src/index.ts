@@ -9,6 +9,11 @@ import { sniperRouter } from "./routes/sniper";
 import { styleRouter } from "./routes/style";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
+const envPath = path.resolve(dirname, "../../.env");
+if (typeof process.loadEnvFile === "function" && existsSync(envPath)) {
+  process.loadEnvFile(envPath);
+}
+
 let activeServer: Server | undefined;
 
 type StartServerOptions = {

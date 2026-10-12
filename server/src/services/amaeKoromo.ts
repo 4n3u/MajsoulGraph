@@ -86,12 +86,12 @@ function upstreamShapeError(): ApiError {
 }
 
 function configuredApiKey(): string {
-  const apiKey = amaeKoromoApiKey?.trim();
-  if (!apiKey) {
+  const rawKey = (amaeKoromoApiKey ?? runtimeProcess.process?.env?.AMAE_KOROMO_API_KEY)?.trim();
+  if (!rawKey) {
     throw new ApiError(500, "internal_error", "Amae-Koromo service is not configured");
   }
 
-  return apiKey;
+  return rawKey.replace(/^Bearer\s+/i, "");
 }
 
 function requirePositiveSafeIntegerText(value: unknown, name: string): string {

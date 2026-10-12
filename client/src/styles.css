@@ -1056,6 +1056,87 @@ h1 {
   width: calc(100% + 28px);
 }
 
+.rank-distribution {
+  border-top: 1px solid var(--border-subtle);
+  display: grid;
+  gap: 14px;
+  padding-top: 18px;
+}
+
+.rank-distribution-header {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.rank-distribution-header h3 {
+  color: var(--text);
+  font-size: 1.05rem;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.rank-distribution-range {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.rank-distribution-body {
+  align-items: center;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(240px, 1.2fr) minmax(200px, 1fr);
+}
+
+@media (max-width: 640px) {
+  .rank-distribution-body {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.rank-distribution-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
+}
+
+.rank-stat-item {
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.rank-stat-item:last-child {
+  border-bottom: none;
+}
+
+.rank-stat-label {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.rank-stat-value {
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.rank-pie-chart {
+  height: 260px;
+  min-width: 0;
+  width: 100%;
+}
+
 .rank-history {
   padding-top: 16px;
 }
@@ -1075,6 +1156,7 @@ h1 {
 .rank-history-row {
   align-items: center;
   border-top: 1px solid var(--border-subtle);
+  cursor: pointer;
   display: grid;
   gap: 8px;
   grid-template-columns:
@@ -1084,7 +1166,24 @@ h1 {
     minmax(72px, 0.7fr)
     minmax(72px, 0.7fr)
     minmax(110px, 1fr);
-  padding: 10px 0;
+  padding: 10px 8px;
+  transition: background-color 150ms ease, box-shadow 150ms ease;
+}
+
+@media (hover: hover) {
+  .rank-history-row:hover {
+    background-color: var(--surface-hover);
+  }
+}
+
+.rank-history-row:focus-visible {
+  outline: 2px solid oklch(14.5% 0 0deg);
+  outline-offset: -1px;
+}
+
+.rank-history-row.is-selected {
+  background-color: var(--surface-muted);
+  box-shadow: inset 3px 0 0 oklch(14.5% 0 0deg);
 }
 
 .rank-history-row span,
