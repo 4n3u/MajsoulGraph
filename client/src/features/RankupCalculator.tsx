@@ -8,6 +8,7 @@ import {
 } from "@shared/rankup";
 import { Button, SelectField, TextField } from "../components/BaseControls";
 import { useErrorToast } from "../components/ErrorToasts";
+import { ToolCredit } from "../components/ToolCredit";
 
 const mahjongTypeOptions = [
   { label: "사마", value: "four" as const },
@@ -153,6 +154,8 @@ export function RankupCalculator() {
           </div>
         </section>
       ) : null}
+
+      <ToolCredit />
     </section>
   );
 }

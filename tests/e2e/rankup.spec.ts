@@ -22,6 +22,8 @@ test.describe("Rankup calculator", () => {
     await expect(table.getByText("금탁").first()).toBeVisible();
     await expect(table.getByText("사마 반장").first()).toBeVisible();
     await expect(table.getByText("확정 승단").first()).toBeVisible();
+
+    await expect(page.getByRole("link", { name: "GitHub 저장소" })).toBeVisible();
   });
 
   test("shows error toast when point is negative or exceeds maximum", async ({ page }) => {
