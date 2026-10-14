@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { Tabs } from "@base-ui/react/tabs";
 import { ToolPlaceholder } from "./ToolPlaceholder";
 
-type ToolId = "points" | "style" | "sniper" | "hand" | "paipu";
+type ToolId = "points" | "style" | "rankup" | "sniper" | "hand" | "paipu";
 
 const HandImageGenerator = lazy(() =>
   import("../features/HandImageGenerator").then((module) => ({ default: module.HandImageGenerator }))
@@ -15,6 +15,9 @@ const PointTrendGraph = lazy(() =>
 );
 const StyleAnalysis = lazy(() =>
   import("../features/StyleAnalysis").then((module) => ({ default: module.StyleAnalysis }))
+);
+const RankupCalculator = lazy(() =>
+  import("../features/RankupCalculator").then((module) => ({ default: module.RankupCalculator }))
 );
 const SniperDetector = lazy(() =>
   import("../features/SniperDetector").then((module) => ({ default: module.SniperDetector }))
@@ -32,6 +35,12 @@ const tools: Array<{ id: ToolId; label: string; note: string; path: string }> = 
     label: "사마 스타일 분석",
     note: "플레이 스타일과 경향을 분석하는 기능은 이후 작업에서 구현됩니다.",
     path: "/style"
+  },
+  {
+    id: "rankup",
+    label: "승단 조건",
+    note: "다음 대국에서 승단하기 위해 필요한 순위와 점수를 계산합니다.",
+    path: "/rankup"
   },
   {
     id: "sniper",
@@ -78,6 +87,10 @@ function renderTool(tool: (typeof tools)[number]) {
 
   if (tool.id === "style") {
     return <StyleAnalysis />;
+  }
+
+  if (tool.id === "rankup") {
+    return <RankupCalculator />;
   }
 
   if (tool.id === "sniper") {

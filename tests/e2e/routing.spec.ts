@@ -9,6 +9,10 @@ test("opens direct tool routes and updates the URL from tabs", async ({ page }) 
   await expect(page).toHaveURL(/\/pai-image$/);
   await expect(page.getByRole("heading", { name: "손패 이미지 생성" })).toBeVisible();
 
+  await page.getByRole("tab", { name: "승단 조건" }).click();
+  await expect(page).toHaveURL(/\/rankup$/);
+  await expect(page.getByRole("heading", { name: "승단 조건" })).toBeVisible();
+
   await page.getByRole("tab", { name: "패보 주소 변환" }).click();
   await expect(page).toHaveURL(/\/pai-pu$/);
   await expect(page.getByRole("heading", { name: "패보 주소 변환" })).toBeVisible();

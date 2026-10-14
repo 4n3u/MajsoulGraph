@@ -273,7 +273,8 @@ h1 {
 .hand-generator-form,
 .point-trend-form,
 .style-analysis-form,
-.sniper-form {
+.sniper-form,
+.rankup-form {
   display: grid;
   gap: 10px;
 }
@@ -943,6 +944,84 @@ h1 {
   font-weight: 700;
 }
 
+.rankup-form-grid {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 140px 140px minmax(160px, 1fr) auto;
+}
+
+.rankup-max-addon {
+  color: var(--text-muted);
+  font-size: 0.825rem;
+  font-weight: 500;
+}
+
+.rankup-button-group {
+  display: flex;
+  gap: 8px;
+}
+
+.rankup-results {
+  margin-top: 24px;
+}
+
+.rankup-summary-box {
+  margin-bottom: 16px;
+}
+
+.rankup-summary {
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.rankup-needed-highlight {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.rankup-table-wrap {
+  overflow-x: auto;
+}
+
+.rankup-table {
+  border-collapse: collapse;
+  min-width: 480px;
+  width: 100%;
+}
+
+.rankup-table th,
+.rankup-table td {
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.875rem;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.rankup-table th {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.rankup-stage-cell {
+  font-weight: 600;
+}
+
+.rankup-unconditional {
+  color: oklch(14.5% 0 0deg);
+  font-weight: 700;
+}
+
+.rankup-score {
+  font-variant-numeric: tabular-nums;
+}
+
+.rankup-impossible {
+  color: var(--text-muted);
+}
+
 .account-picker {
   border-top: 1px solid var(--border-subtle);
   display: grid;
@@ -1235,7 +1314,8 @@ h1 {
   .result-meta,
   .point-form-grid,
   .style-form-grid,
-  .sniper-form-grid {
+  .sniper-form-grid,
+  .rankup-form-grid {
     grid-template-columns: 1fr;
   }
 

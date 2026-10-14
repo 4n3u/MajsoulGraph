@@ -3,6 +3,8 @@ import { expect, test } from "@playwright/test";
 const tools = [
   "포인트 추이 그래프",
   "사마 스타일 분석",
+  "승단 조건",
+  "저격 탐지",
   "손패 이미지 생성",
   "패보 주소 변환"
 ];
