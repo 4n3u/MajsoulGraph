@@ -35,21 +35,84 @@ function formatStartTime(timestamp: number): string {
   );
 }
 
+let cachedSniperDetector: {
+  targetOneNickname: string;
+  targetTwoNickname: string;
+  threshold: string;
+  targetOneCandidates: PlayerAccount[];
+  targetTwoCandidates: PlayerAccount[];
+  targetOne: PlayerAccount | null;
+  targetTwo: PlayerAccount | null;
+  result: SniperResponse | null;
+  analyzedKey: string;
+} = {
+  targetOneNickname: "",
+  targetTwoNickname: "",
+  threshold: "30",
+  targetOneCandidates: [],
+  targetTwoCandidates: [],
+  targetOne: null,
+  targetTwo: null,
+  result: null,
+  analyzedKey: ""
+};
+
+export function resetSniperDetectorCache() {
+  cachedSniperDetector = {
+    targetOneNickname: "",
+    targetTwoNickname: "",
+    threshold: "30",
+    targetOneCandidates: [],
+    targetTwoCandidates: [],
+    targetOne: null,
+    targetTwo: null,
+    result: null,
+    analyzedKey: ""
+  };
+}
+
 export function SniperDetector() {
-  const [targetOneNickname, setTargetOneNickname] = useState("");
-  const [targetTwoNickname, setTargetTwoNickname] = useState("");
-  const [threshold, setThreshold] = useState("30");
-  const [targetOneCandidates, setTargetOneCandidates] = useState<PlayerAccount[]>([]);
-  const [targetTwoCandidates, setTargetTwoCandidates] = useState<PlayerAccount[]>([]);
-  const [targetOne, setTargetOne] = useState<PlayerAccount | null>(null);
-  const [targetTwo, setTargetTwo] = useState<PlayerAccount | null>(null);
+  const [targetOneNickname, setTargetOneNickname] = useState(cachedSniperDetector.targetOneNickname);
+  const [targetTwoNickname, setTargetTwoNickname] = useState(cachedSniperDetector.targetTwoNickname);
+  const [threshold, setThreshold] = useState(cachedSniperDetector.threshold);
+  const [targetOneCandidates, setTargetOneCandidates] = useState<PlayerAccount[]>(
+    cachedSniperDetector.targetOneCandidates
+  );
+  const [targetTwoCandidates, setTargetTwoCandidates] = useState<PlayerAccount[]>(
+    cachedSniperDetector.targetTwoCandidates
+  );
+  const [targetOne, setTargetOne] = useState<PlayerAccount | null>(cachedSniperDetector.targetOne);
+  const [targetTwo, setTargetTwo] = useState<PlayerAccount | null>(cachedSniperDetector.targetTwo);
   const [status, setStatus] = useState("");
-  const [result, setResult] = useState<SniperResponse | null>(null);
+  const [result, setResult] = useState<SniperResponse | null>(cachedSniperDetector.result);
   const requestIdRef = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const analyzedKeyRef = useRef("");
+  const analyzedKeyRef = useRef(cachedSniperDetector.analyzedKey);
   const showError = useErrorToast();
   const isLoading = Boolean(status);
+
+  useEffect(() => {
+    cachedSniperDetector = {
+      targetOneNickname,
+      targetTwoNickname,
+      threshold,
+      targetOneCandidates,
+      targetTwoCandidates,
+      targetOne,
+      targetTwo,
+      result,
+      analyzedKey: analyzedKeyRef.current
+    };
+  }, [
+    targetOneNickname,
+    targetTwoNickname,
+    threshold,
+    targetOneCandidates,
+    targetTwoCandidates,
+    targetOne,
+    targetTwo,
+    result
+  ]);
 
   useEffect(() => () => abortControllerRef.current?.abort(), []);
 

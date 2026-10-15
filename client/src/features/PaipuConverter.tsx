@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import {
   decodePaipuUuid,
   encodePaipuUuid,
@@ -81,11 +81,33 @@ function convertPaipuUrl(rawValue: string): ConversionResult {
   };
 }
 
+let cachedPaipuConverter: {
+  input: string;
+  result: ConversionResult | null;
+} = {
+  input: "",
+  result: null
+};
+
+export function resetPaipuConverterCache() {
+  cachedPaipuConverter = {
+    input: "",
+    result: null
+  };
+}
+
 export function PaipuConverter() {
-  const [input, setInput] = useState("");
-  const [result, setResult] = useState<ConversionResult | null>(null);
+  const [input, setInput] = useState(cachedPaipuConverter.input);
+  const [result, setResult] = useState<ConversionResult | null>(cachedPaipuConverter.result);
   const showError = useErrorToast();
   const showSuccess = useSuccessToast();
+
+  useEffect(() => {
+    cachedPaipuConverter = {
+      input,
+      result
+    };
+  }, [input, result]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

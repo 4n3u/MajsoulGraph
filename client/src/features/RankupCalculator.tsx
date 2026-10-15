@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   calculateRankupConditions,
   DAN_OPTIONS,
@@ -30,12 +30,42 @@ function formatCondition(condition: RankConditionResult) {
   return <span className="rankup-score">{condition.requiredScore.toLocaleString()}점 이상</span>;
 }
 
+let cachedRankup: {
+  mahjongType: MahjongType;
+  danId: string;
+  pointsInput: string;
+  result: RankupCalculationResult | null;
+} = {
+  mahjongType: "four",
+  danId: "master1",
+  pointsInput: "",
+  result: null
+};
+
+export function resetRankupCache() {
+  cachedRankup = {
+    mahjongType: "four",
+    danId: "master1",
+    pointsInput: "",
+    result: null
+  };
+}
+
 export function RankupCalculator() {
-  const [mahjongType, setMahjongType] = useState<MahjongType>("four");
-  const [danId, setDanId] = useState<string>("master1");
-  const [pointsInput, setPointsInput] = useState<string>("");
-  const [result, setResult] = useState<RankupCalculationResult | null>(null);
+  const [mahjongType, setMahjongType] = useState<MahjongType>(cachedRankup.mahjongType);
+  const [danId, setDanId] = useState<string>(cachedRankup.danId);
+  const [pointsInput, setPointsInput] = useState<string>(cachedRankup.pointsInput);
+  const [result, setResult] = useState<RankupCalculationResult | null>(cachedRankup.result);
   const showError = useErrorToast();
+
+  useEffect(() => {
+    cachedRankup = {
+      mahjongType,
+      danId,
+      pointsInput,
+      result
+    };
+  }, [mahjongType, danId, pointsInput, result]);
 
   const currentDan = useMemo(
     () => DAN_OPTIONS.find((item) => item.id === danId) ?? DAN_OPTIONS[9]!,

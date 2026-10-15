@@ -102,7 +102,10 @@ function tooltipFormatter(params: unknown): string {
   ].join("<br />");
 }
 
-export function buildPointChartOptions(timeline: TimelineResult): ChartOption {
+export function buildPointChartOptions(
+  timeline: TimelineResult,
+  initialRange?: { startValue?: number; endValue?: number }
+): ChartOption {
   const points = timeline.points;
   const yMax = Math.max(timeline.summary.maxPointLimit, timeline.summary.highPoint, 1000) + 100;
 
@@ -140,14 +143,18 @@ export function buildPointChartOptions(timeline: TimelineResult): ChartOption {
       {
         type: "inside",
         xAxisIndex: 0,
-        filterMode: "none"
+        filterMode: "none",
+        ...(initialRange?.startValue !== undefined ? { startValue: initialRange.startValue } : {}),
+        ...(initialRange?.endValue !== undefined ? { endValue: initialRange.endValue } : {})
       },
       {
         type: "slider",
         xAxisIndex: 0,
         height: 28,
         bottom: 24,
-        filterMode: "none"
+        filterMode: "none",
+        ...(initialRange?.startValue !== undefined ? { startValue: initialRange.startValue } : {}),
+        ...(initialRange?.endValue !== undefined ? { endValue: initialRange.endValue } : {})
       }
     ],
     series: [

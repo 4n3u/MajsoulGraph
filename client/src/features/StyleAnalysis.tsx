@@ -137,16 +137,46 @@ function CountHelpPopover() {
   );
 }
 
+let cachedStyleAnalysis: {
+  nickname: string;
+  count: string;
+  playerCandidates: PlayerAccount[];
+  result: StyleResponse | null;
+} = {
+  nickname: "",
+  count: "",
+  playerCandidates: [],
+  result: null
+};
+
+export function resetStyleAnalysisCache() {
+  cachedStyleAnalysis = {
+    nickname: "",
+    count: "",
+    playerCandidates: [],
+    result: null
+  };
+}
+
 export function StyleAnalysis() {
-  const [nickname, setNickname] = useState("");
-  const [count, setCount] = useState("");
-  const [playerCandidates, setPlayerCandidates] = useState<PlayerAccount[]>([]);
+  const [nickname, setNickname] = useState(cachedStyleAnalysis.nickname);
+  const [count, setCount] = useState(cachedStyleAnalysis.count);
+  const [playerCandidates, setPlayerCandidates] = useState<PlayerAccount[]>(cachedStyleAnalysis.playerCandidates);
   const [status, setStatus] = useState("");
-  const [result, setResult] = useState<StyleResponse | null>(null);
+  const [result, setResult] = useState<StyleResponse | null>(cachedStyleAnalysis.result);
   const requestIdRef = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
   const showError = useErrorToast();
   const isLoading = Boolean(status);
+
+  useEffect(() => {
+    cachedStyleAnalysis = {
+      nickname,
+      count,
+      playerCandidates,
+      result
+    };
+  }, [nickname, count, playerCandidates, result]);
 
   useEffect(() => {
     return () => {

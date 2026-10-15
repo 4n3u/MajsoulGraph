@@ -89,14 +89,40 @@ function describeParseError(error: unknown) {
   return "패 입력을 확인해 주세요.";
 }
 
+let cachedHandGenerator: {
+  input: string;
+  useNumberedTiles: boolean;
+  hasPreview: boolean;
+} = {
+  input: defaultHand,
+  useNumberedTiles: false,
+  hasPreview: false
+};
+
+export function resetHandGeneratorCache() {
+  cachedHandGenerator = {
+    input: defaultHand,
+    useNumberedTiles: false,
+    hasPreview: false
+  };
+}
+
 export function HandImageGenerator() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [input, setInput] = useState(defaultHand);
-  const [useNumberedTiles, setUseNumberedTiles] = useState(false);
-  const [hasPreview, setHasPreview] = useState(false);
+  const [input, setInput] = useState(cachedHandGenerator.input);
+  const [useNumberedTiles, setUseNumberedTiles] = useState(cachedHandGenerator.useNumberedTiles);
+  const [hasPreview, setHasPreview] = useState(cachedHandGenerator.hasPreview);
   const [isGenerating, setIsGenerating] = useState(false);
   const renderRequestIdRef = useRef(0);
   const showError = useErrorToast();
+
+  useEffect(() => {
+    cachedHandGenerator = {
+      input,
+      useNumberedTiles,
+      hasPreview
+    };
+  }, [input, useNumberedTiles, hasPreview]);
 
   useEffect(() => {
     return () => {
@@ -174,6 +200,20 @@ export function HandImageGenerator() {
 
     return true;
   }
+
+  useEffect(() => {
+    if (!cachedHandGenerator.hasPreview) return;
+    let cancelled = false;
+    try {
+      const groups = parsePaiGroups(cachedHandGenerator.input);
+      void renderHand(groups, cachedHandGenerator.useNumberedTiles, () => !cancelled);
+    } catch {
+      // ignore
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

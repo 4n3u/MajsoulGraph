@@ -187,17 +187,54 @@ async function buildPointTimelineWithProgress(
   return processor.finish();
 }
 
+let cachedPointTrend: {
+  nickname: string;
+  mode: ModeLabel;
+  playerCandidates: PlayerAccount[];
+  timeline: TimelineResult | null;
+  selectedRange: { startIndex: number; endIndex: number } | null;
+} = {
+  nickname: "",
+  mode: "사마",
+  playerCandidates: [],
+  timeline: null,
+  selectedRange: null
+};
+
+export function resetPointTrendCache() {
+  cachedPointTrend = {
+    nickname: "",
+    mode: "사마",
+    playerCandidates: [],
+    timeline: null,
+    selectedRange: null
+  };
+}
+
 export function PointTrendGraph() {
-  const [nickname, setNickname] = useState("");
-  const [mode, setMode] = useState<ModeLabel>("사마");
-  const [playerCandidates, setPlayerCandidates] = useState<PlayerAccount[]>([]);
+  const [nickname, setNickname] = useState(cachedPointTrend.nickname);
+  const [mode, setMode] = useState<ModeLabel>(cachedPointTrend.mode);
+  const [playerCandidates, setPlayerCandidates] = useState<PlayerAccount[]>(cachedPointTrend.playerCandidates);
   const [progress, setProgress] = useState<LoadingProgress | null>(null);
-  const [timeline, setTimeline] = useState<TimelineResult | null>(null);
-  const [selectedRange, setSelectedRange] = useState<{ startIndex: number; endIndex: number } | null>(null);
+  const [timeline, setTimeline] = useState<TimelineResult | null>(cachedPointTrend.timeline);
+  const [selectedRange, setSelectedRange] = useState<{ startIndex: number; endIndex: number } | null>(
+    cachedPointTrend.selectedRange
+  );
+  const initialRangeRef = useRef(cachedPointTrend.selectedRange);
   const requestIdRef = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
   const showError = useErrorToast();
   const isLoading = Boolean(progress);
+
+  useEffect(() => {
+    cachedPointTrend = {
+      nickname,
+      mode,
+      playerCandidates,
+      timeline,
+      selectedRange
+    };
+  }, [nickname, mode, playerCandidates, timeline, selectedRange]);
 
   useEffect(() => {
     return () => {
@@ -207,7 +244,17 @@ export function PointTrendGraph() {
   }, []);
 
   const chartOptions = useMemo(() => {
-    return timeline ? buildPointChartOptions(timeline) : null;
+    if (!timeline) return null;
+    const initialRange = initialRangeRef.current;
+    return buildPointChartOptions(
+      timeline,
+      initialRange
+        ? {
+            startValue: Math.max(0, initialRange.startIndex - 1),
+            endValue: initialRange.endIndex
+          }
+        : undefined
+    );
   }, [timeline]);
 
   const rankDistribution = useMemo(() => {
@@ -225,6 +272,7 @@ export function PointTrendGraph() {
     (event: unknown) => {
       if (!timeline || timeline.summary.gameCount === 0) return;
       const nextRange = extractDataZoomRange(event, timeline.summary.gameCount);
+      initialRangeRef.current = nextRange;
       setSelectedRange((prev) => {
         if (prev && prev.startIndex === nextRange.startIndex && prev.endIndex === nextRange.endIndex) {
           return prev;
@@ -253,14 +301,18 @@ export function PointTrendGraph() {
         selectedRange?.endIndex === period.indexEnd;
 
       if (isCurrent) {
-        setSelectedRange({ startIndex: 1, endIndex: timeline.summary.gameCount });
+        const nextRange = { startIndex: 1, endIndex: timeline.summary.gameCount };
+        initialRangeRef.current = nextRange;
+        setSelectedRange(nextRange);
         pointChartInstanceRef.current?.dispatchAction({
           type: "dataZoom",
           startValue: 0,
           endValue: timeline.summary.gameCount
         });
       } else {
-        setSelectedRange({ startIndex: period.indexStart, endIndex: period.indexEnd });
+        const nextRange = { startIndex: period.indexStart, endIndex: period.indexEnd };
+        initialRangeRef.current = nextRange;
+        setSelectedRange(nextRange);
         pointChartInstanceRef.current?.dispatchAction({
           type: "dataZoom",
           startValue: Math.max(0, period.indexStart - 1),
@@ -280,6 +332,7 @@ export function PointTrendGraph() {
     const isCurrentRequest = () => requestIdRef.current === requestId && !abortController.signal.aborted;
 
     try {
+      initialRangeRef.current = null;
       setTimeline(null);
       setSelectedRange(null);
       setPlayerCandidates([]);
@@ -332,8 +385,10 @@ export function PointTrendGraph() {
       }
 
       if (isCurrentRequest()) {
+        const nextRange = { startIndex: 1, endIndex: nextTimeline.summary.gameCount };
+        initialRangeRef.current = nextRange;
         setTimeline(nextTimeline);
-        setSelectedRange({ startIndex: 1, endIndex: nextTimeline.summary.gameCount });
+        setSelectedRange(nextRange);
         setProgress(null);
         if (abortControllerRef.current === abortController) {
           abortControllerRef.current = null;
@@ -341,6 +396,7 @@ export function PointTrendGraph() {
       }
     } catch (analysisError) {
       if (isCurrentRequest()) {
+        initialRangeRef.current = null;
         setTimeline(null);
         setSelectedRange(null);
         setProgress(null);
@@ -356,6 +412,7 @@ export function PointTrendGraph() {
     event.preventDefault();
 
     const trimmedNickname = nickname.trim();
+    initialRangeRef.current = null;
     setTimeline(null);
     setSelectedRange(null);
     setPlayerCandidates([]);

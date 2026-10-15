@@ -63,6 +63,28 @@ describe("point chart options", () => {
     );
   });
 
+  it("applies initialRange to dataZoom components", () => {
+    const timeline = buildPointTimeline({
+      recordsDescending: [
+        {
+          modeId: 16,
+          startTime: 1000,
+          endTime: 2000,
+          players: [{ accountId: 1, score: 45000, level: 10301, gradingScore: 45 }]
+        }
+      ],
+      targetAccountId: 1,
+      initialLevel: 10301,
+      historyLevel: 10203
+    });
+    const options = buildPointChartOptions(timeline, { startValue: 2, endValue: 5 });
+
+    expect(options.dataZoom).toEqual([
+      expect.objectContaining({ type: "inside", startValue: 2, endValue: 5 }),
+      expect.objectContaining({ type: "slider", startValue: 2, endValue: 5 })
+    ]);
+  });
+
   it("formats point tooltips from the point series instead of rank guide lines", () => {
     const timeline = buildPointTimeline({
       recordsDescending: [
