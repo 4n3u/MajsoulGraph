@@ -148,7 +148,7 @@ test("renders style analysis result from mocked API response", async ({ page }) 
   await expect(result.getByText("X 좌표")).toHaveCount(0);
   await expect(result.getByText("Y 좌표")).toHaveCount(0);
   await expect(result.getByText("화료율")).toBeVisible();
-  await expect(result.getByText("0.32")).toBeVisible();
+  await expect(result.getByText("32.00%")).toBeVisible();
   await expectStyleStatGrid(page, result);
 
   const chart = result.getByRole("img", { name: "스타일 분석 산점도" });

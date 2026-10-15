@@ -98,7 +98,21 @@ function formatStyleSummary(result: StyleResponse): string {
   return `${result.analysis.intensity} ${result.analysis.style}(${formatPoint(result.point.x)},${formatPoint(result.point.y)})`;
 }
 
-function formatStat(value: number): string {
+const rateStatKeys = new Set<keyof ProcessedStyleStats>([
+  "horyuRate",
+  "houjuRate",
+  "furoRate",
+  "riichiRate",
+  "damaRate",
+  "ryukyokuRate",
+  "riichiFirstRate",
+  "riichiChaseRate"
+]);
+
+function formatStat(key: keyof ProcessedStyleStats, value: number): string {
+  if (rateStatKeys.has(key)) {
+    return `${(value * 100).toFixed(2)}%`;
+  }
   return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }
 
@@ -348,7 +362,7 @@ export function StyleAnalysis() {
             {statLabels.map((stat) => (
               <div key={stat.key}>
                 <dt>{stat.label}</dt>
-                <dd>{formatStat(result.processed[stat.key])}</dd>
+                <dd>{formatStat(stat.key, result.processed[stat.key])}</dd>
               </div>
             ))}
           </dl>
