@@ -6,10 +6,11 @@ const tools = [
   "승단 조건",
   "저격 탐지",
   "손패 이미지 생성",
-  "패보 주소 변환"
+  "패보 주소 변환",
+  "서버 상태"
 ];
 
-test("shell omits the app header block and shows all four tools", async ({ page }) => {
+test("shell omits the app header block and shows all tools", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.locator("#root > div > header > div")).toHaveCount(0);
@@ -107,4 +108,19 @@ test("mobile shell uses labelled top navigation and one-column layout", async ({
   });
 
   expect(stacksInOneColumn).toBe(true);
+});
+
+test("server status fits mobile without horizontal scrolling", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/status");
+
+  await expect(page.getByRole("heading", { name: "서버 상태" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "EN/KR" })).toBeVisible();
+
+  const metrics = await page.locator(".server-status-table-wrap").evaluate((element) => ({
+    scrollWidth: element.scrollWidth,
+    clientWidth: element.clientWidth
+  }));
+
+  expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1);
 });

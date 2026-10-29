@@ -17,6 +17,11 @@ test("opens direct tool routes and updates the URL from tabs", async ({ page }) 
   await expect(page).toHaveURL(/\/pai-pu$/);
   await expect(page.getByRole("heading", { name: "패보 주소 변환" })).toBeVisible();
 
+  await page.getByRole("tab", { name: "서버 상태" }).click();
+  await expect(page).toHaveURL(/\/status$/);
+  await expect(page.getByRole("heading", { name: "서버 상태" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "EN/KR" })).toBeVisible();
+
   await page.goto("/");
   await expect(page).toHaveURL(/\/graph$/);
   await expect(page.getByRole("heading", { name: "포인트 추이 그래프" })).toBeVisible();

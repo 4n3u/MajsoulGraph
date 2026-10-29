@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { Tabs } from "@base-ui/react/tabs";
 import { ToolPlaceholder } from "./ToolPlaceholder";
 
-type ToolId = "points" | "style" | "rankup" | "sniper" | "hand" | "paipu";
+type ToolId = "points" | "style" | "rankup" | "sniper" | "hand" | "paipu" | "status";
 
 const HandImageGenerator = lazy(() =>
   import("../features/HandImageGenerator").then((module) => ({ default: module.HandImageGenerator }))
@@ -21,6 +21,9 @@ const RankupCalculator = lazy(() =>
 );
 const SniperDetector = lazy(() =>
   import("../features/SniperDetector").then((module) => ({ default: module.SniperDetector }))
+);
+const ServerStatus = lazy(() =>
+  import("../features/serverStatus/ServerStatus").then((module) => ({ default: module.ServerStatus }))
 );
 
 const tools: Array<{ id: ToolId; label: string; note: string; path: string }> = [
@@ -59,6 +62,12 @@ const tools: Array<{ id: ToolId; label: string; note: string; path: string }> = 
     label: "패보 주소 변환",
     note: "패보 주소 변환 기능은 이후 작업에서 구현됩니다.",
     path: "/pai-pu"
+  },
+  {
+    id: "status",
+    label: "서버 상태",
+    note: "게임 서버까지의 HTTP RTT를 1초마다 측정합니다.",
+    path: "/status"
   }
 ];
 
@@ -95,6 +104,10 @@ function renderTool(tool: (typeof tools)[number]) {
 
   if (tool.id === "sniper") {
     return <SniperDetector />;
+  }
+
+  if (tool.id === "status") {
+    return <ServerStatus />;
   }
 
   return <ToolPlaceholder title={tool.label} description={tool.note} />;
