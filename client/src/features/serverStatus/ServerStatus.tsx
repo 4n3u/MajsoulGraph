@@ -172,7 +172,9 @@ export function ServerStatus() {
                           </td>
                           <td className="server-status-latency">{formatMs(result.ms)}</td>
                           <td className="server-status-trend">
-                            <Sparkline values={result.samples} />
+                            <Sparkline
+                              values={result.samples.length >= 3 ? result.samples.slice(2) : []}
+                            />
                           </td>
                         </tr>
                       ))}
